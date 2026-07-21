@@ -61,7 +61,7 @@ This workflow maintains a living record of Suno's behavior. If you encounter iss
 ## Documentation
 
 - [English Documentation](workflow.md)
-- [الدليل العربي](الدليل.md)
+- [الدليل العربي](ar_workflow.md)
 
 ---
 
