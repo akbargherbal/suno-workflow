@@ -1,0 +1,18 @@
+
+# Vite and Node outputs
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+*.local
+
+# Python files
+backend/.venv/
+backend/__pycache__/
+*.pyc
+
+# Local audio and saved evaluations
+backend/projects/*/evaluations.json
+backend/projects/*/audio/*
+!backend/projects/*/audio/.gitkeep
+
+
