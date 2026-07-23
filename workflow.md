@@ -141,7 +141,24 @@ Applies per section, inside the lyrics box only (style/genre/production prompt s
 2. Test clip first, full section second, as in Phase 4.
 3. Target a solid take (7/10+) before moving to the next section — don't chase a perfect take on every single section on the first pass; you can revisit later.
 4. **Log every kept take**: section name, take number, maqam used, and settings — so a later re-take is reproducible instead of guesswork.
-5. If a specific passage rushes or drifts despite everything else being right, use a targeted **Replace** on just that passage instead of regenerating or Cover-ing the whole section.
+5. If a specific passage rushes, drifts, or contains a mispronounced/wrong word despite everything else being right, don't jump straight to regenerating or Cover-ing the whole section — see Phase 6.5 for the ordered set of narrower fixes to try first.
+
+---
+
+## Phase 6.5 — Post-Generation Lyric-Error Fixes
+
+A common failure mode: a section renders beautifully overall, but one word is wrong (e.g. a tanwin case-ending sung with the wrong vowel). The goal here is to fix only the broken word/line while keeping everything else — voice, groove, arrangement — as close as possible to the approved take. Research-sourced options below, ordered from most surgical to most invasive; try them in this order rather than jumping straight to a full regeneration or Cover.
+
+1. **Sample (Beta), if available on your Suno tier** — samples just the problematic phrase and regenerates it with corrected lyrics, without touching the rest of the section. Try this first: it's the narrowest possible intervention.
+2. **Replace Section (built-in editor)** — select the offending span in the waveform and rewrite the lyrics for that span only; Suno regenerates just that segment while preserving melody, voice, and arrangement elsewhere. Minimum selectable span is ~10 seconds, so single-word selection isn't possible — select the whole line or hemistich around the error, not just the word.
+   - **Don't edit only the broken word in isolation.** Community testing consistently shows this destabilizes the vocal take. Replace the full verse/chorus containing the error instead — this gives the model enough surrounding context to sing the corrected word correctly, at the cost of re-rendering a bit more material than strictly necessary.
+   - Keep every tag identical to the original generation (mood, vocal-quality, instrument tags per Phase 5) and reuse the same Voice/Persona (Phase 4) — a mismatch here is the most common cause of the replaced section not matching the rest.
+3. **Cover mode + high Audio Influence** (the method already in use) — load the approved take as a Cover source, type the corrected lyrics, and in Advanced settings push **Audio Influence to ~90–100** while keeping **Weirdness low**, so Suno follows the reference audio closely instead of reinterpreting it. This tends to preserve voice character and groove while fixing the mispronunciation, but is a heavier-handed pass than Replace Section since it re-renders the whole take.
+4. **Persona-locked regeneration** — if Cover alone drifts the voice too far, first create a **Persona** from the approved take (saves the vocal identity specifically, separate from the general Voice lock in Phase 4), then regenerate with the corrected lyrics **using that same Persona explicitly selected**. Reusing the exact Persona is what keeps the voice identity stable across the fix — skipping this step is a known cause of the corrected take not matching the original vocal character.
+5. **Remaster** — this upgrades audio quality/clarity on older-model takes; it is not a lyric-correction tool. Use it only if the actual problem is that the word is *unclear/muddy* rather than *wrong* — those are different failure modes needing different fixes (see the pronunciation-glitch entries above for what counts as "wrong").
+6. **Human re-recording (paid third-party service, last resort)** — for a final, publish-critical take where AI regeneration keeps failing, some services re-record just the broken line with a real singer and blend it in with AI voice-matching plus manual audio engineering. Reserve this for a finished project's last mile, not for iteration.
+
+**Verification status: unconfirmed, not yet tested on this project.** All of the above is compiled from current Suno documentation/community sources, not from a listening test on our own poems. Before promoting any of these from "option" to "confirmed step," run a controlled test on one known mispronunciation (e.g. a tanwin case-ending error) using options 1–2 first, and log which one actually fixed it without audibly changing the voice or groove — same discipline as the Glitches section below.
 
 ---
 
@@ -211,6 +228,24 @@ Examples: `الليل` → `ٱلَّيۡل`, `اللعن` → `ٱلَّعۡن`.
 
 **Verification step:** before applying, always confirm which specific occurrences actually mispronounce in practice — not every doubled-lam word necessarily glitches, so don't blanket-apply this across a whole poem without spot-checking generated audio first. Log which words were converted and why, per project, so the fix can be reverted easily if Suno's pronunciation improves.
 
+### The waw al-fariqa in "عمرو" is read as a spoken letter instead of a silent orthographic marker
+
+**The glitch:** the word "عمرو" (Amr) carries a silent waw — the "waw al-fariqa" — that exists purely in writing to distinguish it from "عمر" (Umar) in undiacritized text; it carries no sound of its own, and the actual pronunciation depends entirely on the case-ending tanwin (عَمْرٌ / عَمْرٍ). Suno sometimes reads this waw as a spoken letter, producing e.g. "Amro" instead of the correct "Amrin" for a genitive "عَمْرٍ" — treating a purely orthographic mark as phonetic and dropping the tanwin sound in the process.
+
+**The workaround:** since the project's text is already fully diacritized (Phase 0), the waw al-fariqa is redundant for Suno's purposes and can be dropped from the lyrics-box version of the word (not from the authoritative reference text) — write only "عَمْرٍ"/"عَمْرٌ" per the correct i'rab, keeping the tanwin exactly as it should sound.
+
+**Verification status: unconfirmed.** Needs an A/B listening test (with the waw vs. without) before being applied across a whole poem; don't blanket-apply to every occurrence without spot-checking.
+
+### End-of-hemistich wasl (continuation) is read as waqf (stop), swallowing the tanwin
+
+**The glitch:** when a verse's sadr (first hemistich) ends on a word that should phonetically connect into the ajuz (second hemistich) — e.g. "...بعاجل طَعْنَةٍ" continuing into the next hemistich rather than stopping — Suno can instead treat the line break as a pausal position (waqf), dropping the tanwin and rendering the ta marbuta in its pausal form (silent/haa) with an unwanted silence, e.g. "طعنه" with a stop, instead of the connected "طعنتِن" the meaning and meter call for. This doesn't happen every time, which suggests it's tied to how the line is formatted in the lyrics box (e.g. the presence of a newline or line break at a point that isn't actually meant as a stop) rather than the tanwin itself.
+
+**The workaround (unverified, two candidate fixes to test):**
+1. Where wasl is intended, keep the sadr and ajuz on the same line (no newline between them) rather than splitting them visually in the lyrics box; reserve the line break for genuine waqf points.
+2. If a visual/formatting split is still needed, avoid any pausal punctuation at that point and make sure nothing in the surrounding tags implies a stop.
+
+**Verification status: unconfirmed, occurs inconsistently.** Needs a controlled test — hold everything else constant and vary only the line-break/formatting at the hemistich boundary — before promoting either candidate fix to a confirmed rule.
+
 ---
 
 ## Quick Checklist (per new poem)
@@ -226,4 +261,5 @@ Examples: `الليل` → `ٱلَّيۡل`, `اللعن` → `ٱلَّعۡن`.
 - [ ] No intensity/directional adjectives (`intensifying`, `pulling back`, `slightly`, `commanding`, `softening` applied to instruments) sitting in a section header — cues, not choreography (v4, unconfirmed — see Glitches section)
 - [ ] No `hit`/`crash`/`slam`/`smash` verbs anywhere in an instrument tag, regardless of which instrument is named
 - [ ] Take log kept for every approved section
+- [ ] Any post-generation lyric error fixed via Phase 6.5's ordered options (Sample → Replace Section → Cover+Audio Influence → Persona-locked regen), not a straight full regeneration
 - [ ] Full front-to-back listen for drift before final export
