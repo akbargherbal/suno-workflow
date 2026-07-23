@@ -62,8 +62,8 @@ INSTRUMENTATION = (
 EXCLUDE = (
     "Oud, Qanun, Darbuka, Tabla, Ney, Buzuq, Sitar, Khaliji, female vocals, fast tempo, "
     "upbeat, speed metal, punk, muddy mix, muffled vocals, distant vocals, "
-    "washed out, cavernous reverb, wall of sound, synth pads, extreme "
-    "panning, autotune, vocal strain, growling"
+    "washed out, wall of sound, synth pads, extreme "
+    "panning, autotune, vocal strain, growling, audience, applause"
 )
 
 
@@ -112,6 +112,14 @@ def get_start_phrase():
         print(f"{C.MAGENTA}  Phrase cannot be empty, please try again.{C.RESET}")
 
 
+def get_mood():
+    """Optional — blank/whitespace-only input means "no mood field"."""
+    raw = input(
+        f"\n{C.CYAN}➤ Enter a mood (optional, press Enter to skip):{C.RESET} "
+    ).strip()
+    return raw or None
+
+
 def build_vocals(maqam_name: str) -> str:
     return (
         "Male deep baritone, mixed-voice chest-head resonance blend on "
@@ -122,8 +130,12 @@ def build_vocals(maqam_name: str) -> str:
     )
 
 
-def build_prompt(maqam_name: str, start_phrase: str) -> str:
-    """Returns the full markdown block: PREFIX + PROMPT (genre -> instrumentation) + EXCLUDE."""
+def build_prompt(maqam_name: str, start_phrase: str, mood: str | None = None) -> str:
+    """Returns the full markdown block: PREFIX + PROMPT (genre -> instrumentation [-> mood]) + EXCLUDE.
+
+    `mood` is optional. If None, empty, or whitespace-only, the mood field
+    is omitted entirely from the prompt block rather than emitted empty.
+    """
     vocals = build_vocals(maqam_name)
 
     prompt_block = (
@@ -132,6 +144,9 @@ def build_prompt(maqam_name: str, start_phrase: str) -> str:
         f'production: "{PRODUCTION}"\n'
         f'instrumentation: "{INSTRUMENTATION}"'
     )
+
+    if mood and mood.strip():
+        prompt_block += f'\nmood: "{mood.strip()}"'
 
     prefix = build_prefix(start_phrase)
 
@@ -147,7 +162,7 @@ def build_prompt(maqam_name: str, start_phrase: str) -> str:
     )
 
 
-def generate_prompt(choice, start_phrase: str) -> str:
+def generate_prompt(choice, start_phrase: str, mood: str | None = None) -> str:
     """
     Generate a prompt without the interactive menu.
 
@@ -157,25 +172,32 @@ def generate_prompt(choice, start_phrase: str) -> str:
         Either a menu number (e.g. 2) or a maqam name (e.g. "Nahawand").
     start_phrase : str
         The phrase/verse the vocal should start on, e.g. "آذَنَتْنَا بِبَيْنِهَا".
+    mood : str | None, optional
+        Optional mood field appended to the end of the positive prompt.
+        Omitted entirely if None, empty, or whitespace-only.
 
     Examples
     --------
     >>> generate_prompt(2, "آذَنَتْنَا بِبَيْنِهَا")
     >>> generate_prompt("Nahawand", "آذَنَتْنَا بِبَيْنِهَا")
+    >>> generate_prompt("Nahawand", "آذَنَتْنَا بِبَيْنِهَا", mood="wistful, elegiac")
     """
     if not isinstance(start_phrase, str) or not start_phrase.strip():
         raise ValueError("start_phrase must be a non-empty string.")
 
+    if mood is not None and not isinstance(mood, str):
+        raise TypeError("mood must be a string or None.")
+
     if isinstance(choice, int):
         if choice not in MAQAMS:
             raise ValueError(f"Choice must be between 1 and {len(MAQAMS)}.")
-        return build_prompt(MAQAMS[choice], start_phrase)
+        return build_prompt(MAQAMS[choice], start_phrase, mood)
 
     if isinstance(choice, str):
         choice_norm = choice.strip().lower()
         for name in MAQAMS.values():
             if name.lower() == choice_norm:
-                return build_prompt(name, start_phrase)
+                return build_prompt(name, start_phrase, mood)
         valid = ", ".join(MAQAMS.values())
         raise ValueError(f"Unknown maqam '{choice}'. Valid maqams: {valid}")
 
@@ -187,14 +209,17 @@ def main():
     choice = get_choice()
     maqam_name = MAQAMS[choice]
     start_phrase = get_start_phrase()
+    mood = get_mood()
 
     print()
     rule("═", C.GREEN)
     print(f"{C.GREEN}✔ Selected:{C.RESET} {C.BOLD}Maqam {maqam_name}{C.RESET}")
     print(f"{C.GREEN}✔ Start on:{C.RESET} {C.BOLD}{start_phrase}{C.RESET}")
+    if mood:
+        print(f"{C.GREEN}✔ Mood:{C.RESET}    {C.BOLD}{mood}{C.RESET}")
     rule("═", C.GREEN)
     print()
-    print(build_prompt(maqam_name, start_phrase))
+    print(build_prompt(maqam_name, start_phrase, mood))
     print()
 
 
