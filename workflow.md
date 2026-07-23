@@ -21,6 +21,33 @@ Before anything else, get the poem in a form you can trust.
 2. **Cross-check against at least two reputable sources** (e.g. a critical print edition, a trusted literary database) — classical poems often have scribal variants in word choice or even verse order. Pick one authoritative version and stick to it for the whole project.
 3. **Verify verse count and order** before splitting into sections — some poems have disputed or additional verses in different manuscripts (mansub/mukhtalaf fih verses). Decide up front which version you're using.
 4. **Store the poem as structured data** (like the `poem_list` tuple format used for the Nabigha project) — one (sadr, ajuz) pair per verse, indexed from 1. This makes it trivial to slice into sections later.
+5. **The creative target is a fixed pairing, not something to redescribe per project.** A Western musical genre (currently symphonic rock/orchestral) carries a deep, melismatic, classically-articulated Fus'ha vocal — the Arabic identity comes from the voice, not from the instrumentation, and the genre choice itself is deliberately guarded against drifting back toward the Gravitational Well (see Glitches section below). The specifics (which genre, which instruments excluded) live in a generator script and can change; this underlying pairing is the constant to point new sessions to, rather than re-describing the style fresh each time.
+
+---
+
+## Output Schema — Section JSON
+
+Every project's lyrics deliverable is a single JSON file, one object per section, following this shape. Generate against this directly rather than re-deriving it each project — it's the contract Phase 1's section map and Phase 5's lyrics box both feed into.
+
+```json
+{
+  "sections": [
+    {
+      "section_id": 1,
+      "maqam": "Hijaz",
+      "title": "الوداع والخطوات الوادعة",
+      "lyrics": "///***///\n[Intro | single clean guitar | close-mic'd, plate reverb, short decay]\n...",
+      "mood": "melancholic, longing, nostalgic"
+    }
+  ]
+}
+```
+
+- `section_id`: 1-indexed, in poem order.
+- `maqam`: from the fixed set only — Hijaz, Nahawand, Ajam, Kurd (Phase 2).
+- `title`: Arabic section title, from the Phase 1 section map.
+- `lyrics`: the full lyrics-box content as a single string, per the Phase 5 template.
+- `mood`: English only, comma-separated, max 3 tags — matches Phase 1 point 4's section-map column.
 
 ---
 
@@ -30,8 +57,9 @@ Don't chunk by fixed verse count. Chunk by theme, and let verse count follow.
 
 1. **Identify the poem's classical structure first**: most qasidas move through recognizable movements — nasib/atlal (ruins, longing), rahil/tardiyya (journey, hunt, camel or horse description), madih (praise), fakhr (boasting), i'tidhar (apology), hija' (satire), or a closing simile/summary. Not every poem has all of these, and the order can vary — read the whole poem first before deciding.
 2. **Find the pivot verses (takhallus)** — the lines where the poet visibly shifts subject (e.g. "so leave what you see, since there's no going back to it" type transitions). These are your section boundaries, not arbitrary verse-count cutoffs.
-3. **Target 8–12 verses per section as a soft guideline**, not a rule. A thematically tight unit that's 5 or 6 verses is fine — better to respect a natural boundary than pad a section that doesn't need it. A single continuous narrative (like a hunt scene) can run to 11–13 if splitting it would break the story.
-4. **Write the section map as a table**: section name, verse range, verse count, one-line mood/character. Keep this table at the top of your project notes — it's the reference point for every phase after this.
+3. **Target 8–12 verses per section as a soft guideline** (roughly 3–4 minutes of sung material — verse count is a proxy for that duration, not the goal itself), not a rule. A thematically tight unit that's 5 or 6 verses is fine — better to respect a natural boundary than pad a section that doesn't need it. A single continuous narrative (like a hunt scene) can run to 11–13 if splitting it would break the story.
+4. **Write the section map as a table**: section name, verse range, verse count, mood tags (English, max 3 words — this is what lands directly in the output JSON's `mood` field, so write it in its final form here rather than translating/trimming it later). Keep this table at the top of your project notes — it's the reference point for every phase after this.
+5. **Checkpoint before lyrics engineering.** Once the section map and maqam assignments (this phase + Phase 2) are drafted, present them back as a short brief with 2–3 targeted approval questions (division count, any section you're unsure about, genre framing) before starting Phase 5. Cheaper to fix a section boundary or maqam call here than after lyrics are written.
 
 ---
 
