@@ -124,7 +124,7 @@ def build_vocals(maqam_name: str) -> str:
     return (
         "Male deep baritone, mixed-voice chest-head resonance blend on "
         "sustained notes, breath-supported melismatic runs, controlled "
-        "vibrato, commanding presence without forcing, precise Arabic "
+        "vibrato, full-voiced commanding presence, precise Arabic "
         f"diction, melismatic phrasing in Maqam {maqam_name} with unhurried "
         "phrase-ending sustains."
     )
