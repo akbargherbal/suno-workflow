@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Glossary & Terms — Audio Engineering Vocabulary Used in Notebooks 00–06</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Reset & base ──────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* Palette — dark editorial */
+      --bg:          #0f1117;
+      --surface:     #161b27;
+      --surface2:    #1e2535;
+      --border:      #2a3348;
+      --accent:      #e8c87d;        /* warm gold */
+      --accent2:     #6eb5ff;        /* sky blue for links / inline code */
+      --text:        #d4dce8;
+      --text-muted:  #7a8aa0;
+      --text-strong: #eef2f8;
+
+      /* Typography */
+      --font-body:   'DM Sans', sans-serif;
+      --font-head:   'Fraunces', Georgia, serif;
+      --font-mono:   'JetBrains Mono', 'Fira Code', monospace;
+
+      /* Layout */
+      --content-max: 860px;
+      --sidebar-w:   260px;
+      --gap:         2rem;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: clamp(16px, 1.1vw, 18px);
+      line-height: 1.8;
+      text-align: left;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Progress bar ──────────────────────────────────────── */
+    #progress {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      z-index: 1000;
+      transition: width 0.1s linear;
+    }
+
+    /* ── Sidebar TOC ───────────────────────────────────────── */
+    #sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-w);
+      height: 100vh;
+      overflow-y: auto;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 2rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 100;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    #sidebar-title {
+      font-family: var(--font-head);
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    #toc { list-style: none; }
+    #toc li { line-height: 1.4; }
+    #toc a {
+      display: block;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #toc a:hover, #toc a.active {
+      background: var(--surface2);
+      color: var(--text-strong);
+    }
+    #toc .toc-h2 { padding-left: 0.5rem; }
+    #toc .toc-h3 { padding-left: 1.25rem; font-size: 0.77rem; }
+    #toc .toc-h4 { padding-left: 2rem;   font-size: 0.73rem; color: var(--border); }
+
+    /* ── Main content ──────────────────────────────────────── */
+    #main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      padding: 4rem var(--gap) 6rem;
+    }
+
+    article {
+      width: 100%;
+      max-width: var(--content-max);
+    }
+
+    /* ── Header strip ──────────────────────────────────────── */
+    #doc-header {
+      margin-bottom: 3.5rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    #doc-header::before {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 80px;
+      height: 1px;
+      background: var(--accent);
+    }
+    #doc-title {
+      font-family: var(--font-head);
+      font-size: clamp(2rem, 3.5vw, 3.2rem);
+      font-weight: 600;
+      color: var(--text-strong);
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+    }
+    #doc-meta {
+      margin-top: 0.6rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* ── Headings ──────────────────────────────────────────── */
+    h1, h2, h3, h4, h5, h6 {
+      font-family: var(--font-head);
+      color: var(--text-strong);
+      line-height: 1.2;
+      font-weight: 600;
+      scroll-margin-top: 2rem;
+    }
+    h1 { font-size: clamp(1.7rem, 2.5vw, 2.4rem); margin: 3rem 0 1.2rem; }
+    h2 {
+      font-size: clamp(1.35rem, 2vw, 1.85rem);
+      margin: 2.8rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h3 { font-size: clamp(1.1rem, 1.5vw, 1.4rem); margin: 2.2rem 0 0.8rem; }
+    h4 { font-size: 1.05rem; margin: 1.8rem 0 0.6rem; color: var(--accent); }
+    h5, h6 { font-size: 0.95rem; margin: 1.5rem 0 0.5rem; font-weight: 500; }
+
+    /* ── Paragraphs & text ─────────────────────────────────── */
+    p { margin-bottom: 1.25rem; }
+    strong { color: var(--text-strong); font-weight: 600; }
+    em { font-style: italic; color: var(--accent); }
+    del { color: var(--text-muted); }
+    mark {
+      background: rgba(232, 200, 125, 0.2);
+      color: var(--accent);
+      border-radius: 2px;
+      padding: 0 3px;
+    }
+
+    /* ── Links ─────────────────────────────────────────────── */
+    a {
+      color: var(--accent2);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.15s;
+    }
+    a:hover { border-bottom-color: var(--accent2); }
+
+    /* ── Lists ─────────────────────────────────────────────── */
+    ul, ol {
+      margin: 0.75rem 0 1.25rem;
+      padding-left: 1.8rem;
+    }
+    li { margin-bottom: 0.4rem; }
+    li > ul, li > ol { margin-bottom: 0; }
+    ul li::marker { color: var(--accent); }
+    ol li::marker { color: var(--accent); font-family: var(--font-mono); font-size: 0.85em; }
+
+    /* ── Inline code ───────────────────────────────────────── */
+    /* :not(pre) guard prevents this rule from bleeding into plain
+       fenced blocks where <code> is a direct child of <pre>.      */
+    :not(pre) > code:not([class]) {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      background: var(--surface2);
+      color: var(--accent2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.15em 0.45em;
+    }
+
+    /* ── Code blocks (Pygments) ────────────────────────────── */
+    .codehilite {
+      background: #111827 !important;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 1.75rem 0;
+      position: relative;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    }
+
+    .code-wrap {
+      position: relative;
+    }
+
+    .code-lang {
+      position: absolute;
+      top: 0;
+      left: 0;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 0.5rem 1rem;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      border-bottom-right-radius: 6px;
+      user-select: none;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.75rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      z-index: 2;
+    }
+    .copy-btn:hover { background: var(--border); color: var(--text-strong); }
+    .copy-btn.copied { color: #7dffaa; border-color: #7dffaa44; }
+
+    .codehilite pre {
+      margin: 0 !important;
+      padding: 2.8rem 1.5rem 1.5rem !important;
+      font-family: var(--font-mono) !important;
+      font-size: clamp(0.78rem, 0.9vw, 0.88rem) !important;
+      line-height: 1.7 !important;
+      overflow-x: auto;
+      tab-size: 4;
+    }
+
+    /* ── Plain fenced blocks / Prose blocks ───────────────── */
+        /* ── Plain fenced blocks (no lang tag) ────────────────────
+       Default monospace treatment when --prose is NOT active.
+    ─────────────────────────────────────────────────────────── */
+    pre:not(.codehilite pre) {
+      background: #111827;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.86rem;
+      line-height: 1.7;
+      margin: 1.75rem 0;
+    }
+
+    /* ── Blockquotes ───────────────────────────────────────── */
+    blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 1.5rem 0;
+      padding: 1rem 1.5rem;
+      background: var(--surface2);
+      border-radius: 0 8px 8px 0;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+    blockquote p { margin-bottom: 0; }
+
+    /* ── Tables ────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; margin: 1.75rem 0; border-radius: 10px; border: 1px solid var(--border); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    thead {
+      background: var(--surface2);
+    }
+    th {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--accent);
+      padding: 0.8rem 1.1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-weight: 500;
+    }
+    td {
+      padding: 0.7rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    /* ── Horizontal rule ───────────────────────────────────── */
+    hr {
+      border: none;
+      height: 1px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+      margin: 2.5rem 0;
+    }
+
+    /* ── Task lists ────────────────────────────────────────── */
+    .task-list-item input[type="checkbox"] {
+      accent-color: var(--accent);
+      margin-right: 0.5rem;
+    }
+
+    /* ── Images ────────────────────────────────────────────── */
+    img {
+      max-width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      display: block;
+      margin: 1.5rem auto;
+    }
+
+    /* ── Footnotes ─────────────────────────────────────────── */
+    .footnote {
+      border-top: 1px solid var(--border);
+      margin-top: 3rem;
+      padding-top: 1rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Back to top ───────────────────────────────────────── */
+    #back-top {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 40px;
+      height: 40px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 1.1rem;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.2s, transform 0.2s, color 0.15s;
+      z-index: 200;
+    }
+    #back-top.visible { opacity: 1; transform: translateY(0); }
+    #back-top:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* ── Home button ────────────────────────────────────────── */
+    #home-btn {
+      position: fixed;
+      bottom: 5.5rem;
+      right: 2rem;
+      width: 40px;
+      height: 40px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 1.1rem;
+      opacity: 1;
+      transition: color 0.15s, border-color 0.15s;
+      z-index: 200;
+    }
+    #home-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* ── Sidebar toggle (hidden on wide screens) ───────────── */
+    #sidebar-toggle {
+      display: none;
+      position: fixed;
+      bottom: 2rem;
+      left: 1rem;
+      z-index: 300;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.4rem 0.75rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+      cursor: pointer;
+    }
+
+    /* ── Scrollbar ─────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── Animations ────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+    article { animation: fadeUp 0.45s ease both; }
+
+    /* ── Responsive ────────────────────────────────────────── */
+    @media (max-width: 1100px) {
+      :root { --sidebar-w: 220px; }
+    }
+    @media (max-width: 820px) {
+      #sidebar { transform: translateX(-100%); transition: transform 0.25s; }
+      #sidebar.open { transform: translateX(0); }
+      #main { margin-left: 0 !important; }
+      #sidebar-toggle { display: block; }
+    }
+
+    /* ── Pygments injected ─────────────────────────────────── */
+    pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #ffffcc }
+.codehilite { background: #282C34; color: #ABB2BF }
+.codehilite .c { color: #7F848E } /* Comment */
+.codehilite .err { color: #ABB2BF } /* Error */
+.codehilite .esc { color: #ABB2BF } /* Escape */
+.codehilite .g { color: #ABB2BF } /* Generic */
+.codehilite .k { color: #C678DD } /* Keyword */
+.codehilite .l { color: #ABB2BF } /* Literal */
+.codehilite .n { color: #E06C75 } /* Name */
+.codehilite .o { color: #56B6C2 } /* Operator */
+.codehilite .x { color: #ABB2BF } /* Other */
+.codehilite .p { color: #ABB2BF } /* Punctuation */
+.codehilite .ch { color: #7F848E } /* Comment.Hashbang */
+.codehilite .cm { color: #7F848E } /* Comment.Multiline */
+.codehilite .cp { color: #7F848E } /* Comment.Preproc */
+.codehilite .cpf { color: #7F848E } /* Comment.PreprocFile */
+.codehilite .c1 { color: #7F848E } /* Comment.Single */
+.codehilite .cs { color: #7F848E } /* Comment.Special */
+.codehilite .gd { color: #ABB2BF } /* Generic.Deleted */
+.codehilite .ge { color: #ABB2BF } /* Generic.Emph */
+.codehilite .ges { color: #ABB2BF } /* Generic.EmphStrong */
+.codehilite .gr { color: #ABB2BF } /* Generic.Error */
+.codehilite .gh { color: #ABB2BF } /* Generic.Heading */
+.codehilite .gi { color: #ABB2BF } /* Generic.Inserted */
+.codehilite .go { color: #ABB2BF } /* Generic.Output */
+.codehilite .gp { color: #ABB2BF } /* Generic.Prompt */
+.codehilite .gs { color: #ABB2BF } /* Generic.Strong */
+.codehilite .gu { color: #ABB2BF } /* Generic.Subheading */
+.codehilite .gt { color: #ABB2BF } /* Generic.Traceback */
+.codehilite .kc { color: #E5C07B } /* Keyword.Constant */
+.codehilite .kd { color: #C678DD } /* Keyword.Declaration */
+.codehilite .kn { color: #C678DD } /* Keyword.Namespace */
+.codehilite .kp { color: #C678DD } /* Keyword.Pseudo */
+.codehilite .kr { color: #C678DD } /* Keyword.Reserved */
+.codehilite .kt { color: #E5C07B } /* Keyword.Type */
+.codehilite .ld { color: #ABB2BF } /* Literal.Date */
+.codehilite .m { color: #D19A66 } /* Literal.Number */
+.codehilite .s { color: #98C379 } /* Literal.String */
+.codehilite .na { color: #E06C75 } /* Name.Attribute */
+.codehilite .nb { color: #E5C07B } /* Name.Builtin */
+.codehilite .nc { color: #E5C07B } /* Name.Class */
+.codehilite .no { color: #E06C75 } /* Name.Constant */
+.codehilite .nd { color: #61AFEF } /* Name.Decorator */
+.codehilite .ni { color: #E06C75 } /* Name.Entity */
+.codehilite .ne { color: #E06C75 } /* Name.Exception */
+.codehilite .nf { color: #61AFEF; font-weight: bold } /* Name.Function */
+.codehilite .nl { color: #E06C75 } /* Name.Label */
+.codehilite .nn { color: #E06C75 } /* Name.Namespace */
+.codehilite .nx { color: #E06C75 } /* Name.Other */
+.codehilite .py { color: #E06C75 } /* Name.Property */
+.codehilite .nt { color: #E06C75 } /* Name.Tag */
+.codehilite .nv { color: #E06C75 } /* Name.Variable */
+.codehilite .ow { color: #56B6C2 } /* Operator.Word */
+.codehilite .pm { color: #ABB2BF } /* Punctuation.Marker */
+.codehilite .w { color: #ABB2BF } /* Text.Whitespace */
+.codehilite .mb { color: #D19A66 } /* Literal.Number.Bin */
+.codehilite .mf { color: #D19A66 } /* Literal.Number.Float */
+.codehilite .mh { color: #D19A66 } /* Literal.Number.Hex */
+.codehilite .mi { color: #D19A66 } /* Literal.Number.Integer */
+.codehilite .mo { color: #D19A66 } /* Literal.Number.Oct */
+.codehilite .sa { color: #98C379 } /* Literal.String.Affix */
+.codehilite .sb { color: #98C379 } /* Literal.String.Backtick */
+.codehilite .sc { color: #98C379 } /* Literal.String.Char */
+.codehilite .dl { color: #98C379 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #98C379 } /* Literal.String.Doc */
+.codehilite .s2 { color: #98C379 } /* Literal.String.Double */
+.codehilite .se { color: #98C379 } /* Literal.String.Escape */
+.codehilite .sh { color: #98C379 } /* Literal.String.Heredoc */
+.codehilite .si { color: #98C379 } /* Literal.String.Interpol */
+.codehilite .sx { color: #98C379 } /* Literal.String.Other */
+.codehilite .sr { color: #98C379 } /* Literal.String.Regex */
+.codehilite .s1 { color: #98C379 } /* Literal.String.Single */
+.codehilite .ss { color: #98C379 } /* Literal.String.Symbol */
+.codehilite .bp { color: #E5C07B } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #56B6C2; font-weight: bold } /* Name.Function.Magic */
+.codehilite .vc { color: #E06C75 } /* Name.Variable.Class */
+.codehilite .vg { color: #E06C75 } /* Name.Variable.Global */
+.codehilite .vi { color: #E06C75 } /* Name.Variable.Instance */
+.codehilite .vm { color: #E06C75 } /* Name.Variable.Magic */
+.codehilite .il { color: #D19A66 } /* Literal.Number.Integer.Long */
+
+
+  </style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<!-- Sidebar -->
+<nav id="sidebar" aria-label="Table of contents">
+  <div id="sidebar-title">Contents</div>
+  <ul id="toc"></ul>
+</nav>
+
+<button id="sidebar-toggle" aria-label="Toggle sidebar">☰ TOC</button>
+
+<!-- Main -->
+<div id="main">
+  <article>
+    <header id="doc-header">
+      <h1 id="doc-title">Glossary & Terms — Audio Engineering Vocabulary Used in Notebooks 00–06</h1>
+      <div id="doc-meta"></div>
+    </header>
+
+    <h1 id="glossary-terms-audio-engineering-vocabulary-used-in-notebooks-0006">Glossary &amp; Terms — Audio Engineering Vocabulary Used in Notebooks 00–06</h1>
+<p>This glossary collects <strong>every specialized term, abbreviation, tool name, and unusual verb</strong><br>
+used across the seven notebooks (<code>00</code> through <code>06</code>), explained in plain English. Terms are<br>
+grouped by theme rather than alphabetically, because most of them only make sense next to the<br>
+related ideas around them. Within each group, terms are ordered the way you&rsquo;d naturally meet<br>
+them (simple idea first, more advanced idea after).</p>
+<p>If you ever hit a word in the notebooks or in the project&rsquo;s scripts (<code>vocal_prominence.py</code>,<br>
+<code>separation_quality_audit.py</code>, <code>reverb_decay_analysis.py</code>, <code>stem_analysis.py</code>, <code>context.md</code>,<br>
+<code>AGENTS.md</code>) that isn&rsquo;t defined here, treat that as a bug in this glossary and flag it.</p>
+<hr>
+<h2 id="1-the-absolute-basics-what-a-digital-audio-file-is">1. The absolute basics: what a digital audio file <em>is</em></h2>
+<p><strong>Waveform</strong><br>
+The plot of a sound&rsquo;s <strong>amplitude</strong> over time. It is literally a very long list of numbers, one<br>
+after another, each one saying &ldquo;how far the air pressure was pushed at this instant.&rdquo; Nothing<br>
+about pitch or tone color is visible in a waveform by itself — only loudness, moment to moment.</p>
+<p><strong>Amplitude</strong><br>
+A single number describing how far the air pressure (or, in a digital file, the stored signal<br>
+value) is pushed away from zero at one specific instant. In a normalized digital file this<br>
+usually ranges from about −1.0 to +1.0. Zero means silence at that instant; the farther from<br>
+zero, the louder that instant is. It is <em>not</em> the same thing as loudness over a whole clip (see<br>
+<strong>RMS</strong> below) — it&rsquo;s just one snapshot.</p>
+<p><strong>Sample / Sample rate (<code>sr</code>)</strong><br>
+A computer cannot store a truly continuous wave, so it takes <strong>samples</strong> — snapshots of the<br>
+amplitude — many times per second. The <strong>sample rate</strong> is simply &ldquo;how many snapshots per<br>
+second,&rdquo; measured in Hz (see <strong>Hz</strong> below). 44,100 Hz (&ldquo;44.1 kHz,&rdquo; CD quality) and 48,000 Hz<br>
+(&ldquo;48 kHz,&rdquo; common in video/streaming) are two common rates. Loading two files that have<br>
+<em>different</em> native sample rates and treating &ldquo;sample number 1000&rdquo; as &ldquo;the same moment in both&rdquo;<br>
+is a classic, silent bug — which is why the scripts in this project always load audio with<br>
+<code>librosa.load(path, sr=None)</code> (see next entry) instead of trusting a default.</p>
+<p><strong><code>sr=None</code> (in <code>librosa.load</code>)</strong><br>
+By default, the <code>librosa</code> library quietly <strong>resamples</strong> every file down to 22,050 Hz when you<br>
+load it — meaning it throws away some detail and recalculates the file at a lower sample rate,<br>
+whether you asked for that or not. Passing <code>sr=None</code> tells it &ldquo;keep the file&rsquo;s own original<br>
+rate.&rdquo; This project always uses <code>sr=None</code> so that two tracks recorded at genuinely different<br>
+native rates never get silently compared as if they were the same.</p>
+<p><strong>Mono</strong><br>
+An audio signal with a single channel — one stream of amplitude numbers, meant to be played<br>
+identically through every speaker/ear. There is no left/right distinction in mono audio.</p>
+<p><strong>Stereo</strong><br>
+An audio signal with <strong>two</strong> channels — a <strong>Left (L)</strong> channel and a <strong>Right (R)</strong> channel —<br>
+meant to be played through two separate speakers, or into the left and right ears via<br>
+headphones. The small differences between L and R at any instant carry all of a mix&rsquo;s stereo<br>
+information (see <strong>Mid/Side decomposition</strong> below).</p>
+<p><strong>Clipping</strong><br>
+When a digital signal&rsquo;s amplitude tries to exceed the maximum the format can represent (roughly<br>
+±1.0 for a normalized file) and gets abruptly cut off (flattened) instead of continuing to rise.<br>
+0 dB is described in the notebooks as &ldquo;the loudest a digital file can be without clipping.&rdquo;</p>
+<hr>
+<h2 id="2-turning-a-wave-into-a-single-loudness-number">2. Turning a wave into a single loudness number</h2>
+<p><strong>RMS (Root Mean Square)</strong><br>
+A single number that answers &ldquo;on average, how much energy did this chunk of audio have?&rdquo; You<br>
+can&rsquo;t just average raw amplitude values directly, because positive and negative values cancel<br>
+each other out to roughly zero even in a loud signal. RMS fixes that in three steps:<br>
+1. <strong>Square</strong> every amplitude value (this removes the negative signs and weights loud peaks<br>
+   more heavily — closer to how physical energy actually behaves).<br>
+2. Take the <strong>mean</strong> (average) of those squared values.<br>
+3. Take the <strong>square root</strong>, to bring the units back to something comparable to the original<br>
+   amplitude scale.</p>
+<p><strong>dB (decibel)</strong><br>
+RMS converted onto a <em>logarithmic</em> scale, because human hearing is not linear — it takes a much<br>
+bigger jump in raw physical energy before your ear perceives &ldquo;twice as loud.&rdquo; dB compresses the<br>
+numbers so they track what your ear actually experiences. In this project&rsquo;s convention, dB<br>
+values from audio are <strong>negative</strong> (0 dB = the loudest a file can be without clipping; more<br>
+negative = quieter). A <em>higher</em> (less negative) dB number always means <em>louder</em>.</p>
+<p><strong><code>rms_db()</code></strong><br>
+The specific helper function used throughout this project&rsquo;s scripts: it computes RMS and then<br>
+converts that RMS value to dB in one step. A tiny constant (<code>eps</code>) is added before taking the<br>
+logarithm so that a perfectly silent (all-zero) signal doesn&rsquo;t produce an undefined<br>
+<code>log(0) = −infinity</code> result and crash the code.</p>
+<p><strong>Vocal prominence</strong><br>
+A project-specific term (not a general audio-engineering term) meaning:<br>
+<code>RMS_dB(vocal) − RMS_dB(instrumental)</code><br>
+— i.e., how many dB louder (or quieter) the vocal is than the instrumental backing, in a given<br>
+window of time. A positive number means the vocal sits above the instrumental; a negative<br>
+number means the instrumental is louder at that moment.</p>
+<p><strong>Silence gate (as applied to windows of audio, not the tool artifact in §6)</strong><br>
+A simple filtering rule used before computing statistics: windows where the signal is<br>
+essentially silent (e.g. <code>Mid &lt; −40 dB</code>, or <code>vocal &lt; −40 dB</code>) are dropped from the analysis,<br>
+because a silent frame carries no meaningful information about balance or content.</p>
+<hr>
+<h2 id="3-statistics-vocabulary-used-to-summarize-numbers">3. Statistics vocabulary used to summarize numbers</h2>
+<p><strong>Median</strong><br>
+The middle value of a sorted list of numbers — the &ldquo;typical&rdquo; value, less sensitive to extreme<br>
+outliers than a plain average.</p>
+<p><strong>Mean</strong><br>
+The ordinary arithmetic average: sum everything, divide by how many values there are.</p>
+<p><strong>Std / Std Dev (Standard deviation)</strong><br>
+A single number describing how spread out a set of values is around its mean/median. A small<br>
+std means values cluster tightly together (consistent); a large std means values swing widely<br>
+(inconsistent) even if the <em>typical</em> value looks fine.</p>
+<p><strong>IQR (Interquartile Range)</strong><br>
+The range covering the middle 50% of a sorted list of values (from the 25th percentile to the<br>
+75th percentile). Like std dev, it measures spread, but it&rsquo;s less influenced by a few extreme<br>
+outliers.</p>
+<p><strong>Range</strong><br>
+Simply the distance from the smallest value in a data set to the largest.</p>
+<p><strong>Box plot</strong><br>
+A chart that visually summarizes a set of numbers using their median, their IQR (the &ldquo;box&rdquo;),<br>
+and their overall range (the &ldquo;whiskers&rdquo;), letting you compare several tracks&rsquo; distributions<br>
+side by side at a glance.</p>
+<p><strong>Histogram</strong><br>
+A chart that groups numeric values into &ldquo;bins&rdquo; (ranges) and shows how many values fall into<br>
+each bin, as bars — useful for spotting where large clusters of data pile up (e.g. a pile of<br>
+frames all sitting at exactly the same extreme value).</p>
+<p><strong>Correlation</strong><br>
+A number (typically between −1 and 1) describing how closely two signals rise and fall<br>
+together over time. A correlation near 1.0 means their <em>shape</em> over time matches almost<br>
+perfectly, even if their absolute loudness levels differ.</p>
+<hr>
+<h2 id="4-frequency-pitch-as-opposed-to-loudness">4. Frequency (pitch), as opposed to loudness</h2>
+<p><strong>Frequency</strong><br>
+How <em>fast</em> a wave is vibrating/wiggling — this is what we perceive as <strong>pitch</strong>. It is a<br>
+completely separate property from loudness (amplitude/RMS/dB): a sound can be quiet and<br>
+high-pitched, or loud and low-pitched, independently.</p>
+<p><strong>Hz (Hertz, &ldquo;cycles per second&rdquo;)</strong><br>
+The unit frequency is measured in. A low bass note might vibrate 60 times a second (60 Hz); a<br>
+bright cymbal shimmer might vibrate 8,000 times a second (8 kHz — see <strong>kHz</strong> below). Human<br>
+hearing roughly spans 20 Hz to 20,000 Hz, though most musically important content (bass,<br>
+vocals, most instruments) sits below 5 kHz.</p>
+<p><strong>kHz (kilohertz)</strong><br>
+A shorthand for &ldquo;thousands of Hz&rdquo; — 1 kHz = 1,000 Hz. Used constantly in the notebooks (e.g.<br>
+&ldquo;2–5 kHz,&rdquo; &ldquo;44.1 kHz&rdquo;).</p>
+<p><strong>Fundamental frequency</strong><br>
+The main, dominant pitch you perceive when a note is sung or played — the &ldquo;root&rdquo; tone.</p>
+<p><strong>Harmonics</strong><br>
+Quieter tones stacked on top of the fundamental frequency, at whole-number multiples of it (2x,<br>
+3x, etc.). No real musical note is a single pure tone; it&rsquo;s a fundamental plus a stack of<br>
+harmonics, and the exact mixture of harmonics is a big part of what makes different instruments<br>
+(or voices) sound distinct even when playing the same pitch.</p>
+<p><strong>Formant</strong><br>
+A resonance — a frequency range that gets naturally boosted — shaped by the physical cavity a<br>
+sound travels through (the mouth/throat/nasal passages for a singing voice; the body of a<br>
+guitar or the bore of a trumpet for an instrument). Formants, and the fact that they shift<br>
+constantly as a person speaks or sings, are a large part of what makes a human voice sound like<br>
+a <em>voice</em> rather than an instrument playing an identical note — and part of why voices are<br>
+harder for AI separation tools to cleanly isolate than more static instrument tones.</p>
+<p><strong>Spectrum</strong><br>
+A description of &ldquo;how much of each frequency is present&rdquo; in a chunk of audio, all added<br>
+together, with time collapsed away — i.e., not &ldquo;how loud, when&rdquo; (that&rsquo;s a waveform) but &ldquo;made<br>
+of which pitches, how much of each.&rdquo;</p>
+<p><strong>FFT (Fast Fourier Transform)</strong><br>
+The mathematical tool that takes one chunk of waveform and calculates its spectrum — how much<br>
+energy is present at each frequency in that chunk.</p>
+<p><strong>STFT (Short-Time Fourier Transform)</strong><br>
+An extension of the FFT that &ldquo;adds time back in&rdquo;: instead of one static spectrum for an entire<br>
+clip, it computes many FFTs on small, overlapping windows in a row and stacks the results<br>
+together, producing a <strong>spectrogram</strong> (see next entry). This is the function <code>librosa.stft</code><br>
+used throughout the project&rsquo;s separation-quality and reverb scripts.</p>
+<p><strong>Spectrogram</strong><br>
+The picture that comes out of an STFT: time runs along the x-axis, frequency runs along the<br>
+y-axis, and color represents how much energy is present at that frequency, at that instant.<br>
+Bright horizontal bands are sustained pitches (held vocal notes, sustained instrument tones);<br>
+short vertical smears are percussive hits (a drum, a pluck) that briefly excite a wide range of<br>
+frequencies at once.</p>
+<p><strong>Frequency bands (named ranges)</strong><br>
+Engineers rarely talk in exact Hz numbers; instead they group frequencies into named bands,<br>
+because different instruments and different mixing problems tend to live in different ranges.<br>
+The bands used throughout this project (from <code>stem_analysis.py</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Band</th>
+<th>Range</th>
+<th>Typically home to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sub</td>
+<td>20–60 Hz</td>
+<td>Felt more than heard; deep bass extension</td>
+</tr>
+<tr>
+<td>Bass</td>
+<td>60–250 Hz</td>
+<td>Bass guitar/synth, kick drum body</td>
+</tr>
+<tr>
+<td>Low-Mid</td>
+<td>250–500 Hz</td>
+<td>Vocal/instrument &ldquo;body&rdquo; and warmth</td>
+</tr>
+<tr>
+<td>Mid</td>
+<td>500–2,000 Hz</td>
+<td>Where most instruments and vocal clarity live</td>
+</tr>
+<tr>
+<td>Presence</td>
+<td>2,000–5,000 Hz</td>
+<td>Vocal intelligibility, &ldquo;forwardness,&rdquo; consonants</td>
+</tr>
+<tr>
+<td>Treble</td>
+<td>5,000–20,000 Hz</td>
+<td>Air, shimmer, cymbals, breathiness</td>
+</tr>
+</tbody>
+</table>
+<p><strong>&ldquo;Presence&rdquo; (as a band name)</strong><br>
+Specifically the 2–5 kHz range — the frequencies that give a vocal its clarity, intelligibility,<br>
+and sense of &ldquo;cutting through&rdquo; a mix. Not to be confused with the general English word<br>
+&ldquo;presence.&rdquo;</p>
+<p><strong>Spectral flatness</strong><br>
+A number that tells apart plain background <em>noise</em> from a <em>tonal</em> (musically structured) sound.<br>
+It compares the <strong>geometric mean</strong> of a spectrum&rsquo;s energy across frequencies to its<br>
+<strong>arithmetic mean</strong>:<br>
+- White noise (energy spread evenly across every frequency) → the geometric mean is close to<br>
+  the arithmetic mean → <strong>flatness close to 1.0</strong>.<br>
+- A pure tone, chord, or hum (energy concentrated in a few frequencies) → a few tall spikes drag<br>
+  the arithmetic mean up while the geometric mean stays low → <strong>flatness close to 0</strong>.<br>
+In this project, spectral flatness is used to check whether &ldquo;quiet&rdquo; parts of a vocal stem are<br>
+genuine noise floor (high flatness = good separation) or actually contain leftover instrumental<br>
+content (low flatness = <strong>bleed</strong>, see §6).</p>
+<p><strong>Geometric mean / Arithmetic mean</strong><br>
+Two different ways of averaging a list of numbers. The <strong>arithmetic mean</strong> is the everyday<br>
+average (sum, divide by count). The <strong>geometric mean</strong> multiplies all the values together and<br>
+then takes the appropriate root — it is much more sensitive to small values being present, and<br>
+is pulled down hard by even one near-zero value, which is exactly why it&rsquo;s low when energy is<br>
+concentrated in only a few frequencies.</p>
+<hr>
+<h2 id="5-the-stereo-field-panning-midside-and-stereo-tools">5. The stereo field: panning, Mid/Side, and stereo tools</h2>
+<p><strong>Panned / Panning</strong><br>
+&ldquo;Panning&rdquo; a sound means positioning it somewhere between the left and right speakers by<br>
+adjusting its relative volume in each channel — this is the verb the notebooks use constantly<br>
+and is worth spelling out precisely, since it isn&rsquo;t an everyday English word. If a sound is<br>
+<strong>panned left</strong>, its Left-channel amplitude is made bigger than its Right-channel amplitude at<br>
+that moment (so it feels like it&rsquo;s coming more from the left speaker). A sound panned <strong>dead<br>
+center</strong> has (nearly) identical amplitude in L and R — vocals and kick drums are almost always<br>
+panned dead center in a typical pop mix. &ldquo;Panned instruments&rdquo; means instruments that have been<br>
+deliberately placed off-center in the stereo image (e.g., a guitar mixed slightly to the right).</p>
+<p><strong>Mid/Side decomposition</strong><br>
+A standard technique for splitting a stereo signal into &ldquo;the part both channels agree on&rdquo; and<br>
+&ldquo;the part they disagree on&rdquo;:</p>
+<p>$$\text{Mid} = \frac{L + R}{2} \qquad \text{Side} = \frac{L - R}{2}$$</p>
+<ul>
+<li><strong>Mid</strong> — content that&rsquo;s identical (or nearly identical) in L and R adds up constructively.<br>
+  Centered content (lead vocal, kick, bass, snare) survives strongly in Mid.</li>
+<li><strong>Side</strong> — if L and R are identical, subtracting them gives zero. Only content that <em>differs</em><br>
+  between the channels (panned instruments, stereo reverb, width effects) shows up in Side.</li>
+</ul>
+<p>The transform is <strong>reversible</strong>: <code>L = Mid + Side</code> and <code>R = Mid − Side</code>, exactly, with no loss of<br>
+information (a &ldquo;lossless&rdquo; transform — see below). This reversibility is why Mid/Side is a real<br>
+mixing/mastering tool and not just a measurement trick: engineers can process Mid and Side<br>
+independently and then recombine them back into a normal L/R stereo signal.</p>
+<p><strong>Lossless (in the Mid/Side context)</strong><br>
+Describes a transform that can be perfectly undone — encoding to Mid/Side and immediately<br>
+decoding back gives you (up to floating-point rounding) the exact original signal, with nothing<br>
+lost or altered.</p>
+<p><strong>Width</strong><br>
+A single-number summary of how &ldquo;wide&rdquo; (spread out) a stereo signal is, calculated in this<br>
+project as <code>Side_dB − Mid_dB</code>. A higher (less negative) number means more energy is living in<br>
+the Side channel relative to Mid — i.e., a wider-sounding mix. A lower number means the mix is<br>
+narrower/more centered.</p>
+<p><strong>Narrow / Wide (as EQ moves or descriptions)</strong><br>
+&ldquo;Narrow&rdquo; describes pulling a mix&rsquo;s image toward the center (reducing Side content relative to<br>
+Mid) — reverb and pads lose spread while centered elements like the vocal keep their volume.<br>
+&ldquo;Wide&rdquo; describes the opposite — boosting Side content so the edges of the mix (air, cymbals,<br>
+reverb) become more prominent, without touching the centered Mid content (and therefore without<br>
+touching the vocal&rsquo;s tone).</p>
+<p><strong>Goniometer (a.k.a. Lissajous scope / vectorscope)</strong><br>
+A visualization tool that plots every sample of the Left channel on the x-axis against the<br>
+corresponding sample of the Right channel on the y-axis. A <strong>mono</strong> signal (L = R at every<br>
+instant) produces points that all fall exactly on the diagonal line <code>y = x</code>. A <strong>wide</strong> stereo<br>
+signal (lots of <code>L ≠ R</code> content) sprays points out into a cloud around that diagonal — the more<br>
+spread in the cloud, the wider the stereo image.</p>
+<p><strong>Mono compatibility / &ldquo;mono-safe&rdquo;</strong><br>
+A property of a mix that still sounds correct (nothing missing or hollowed-out) when played<br>
+back in mono — i.e., when L and R are summed together. Bass content is traditionally kept<br>
+centered (in Mid) specifically because centered content survives summing to mono; content that<br>
+lives entirely in Side can partially or fully cancel out when a mix is collapsed to mono. This<br>
+is why &ldquo;keep the bass centered&rdquo; is a standard mixing rule.</p>
+<hr>
+<h2 id="6-eq-equalization-and-phase-concepts">6. EQ (equalization) and phase concepts</h2>
+<p><strong>EQ (Equalizer / Equalization)</strong><br>
+A tool/process that changes the volume of specific frequency ranges independently — boosting<br>
+some, cutting others — rather than changing the volume of the whole signal uniformly.</p>
+<p><strong>Boost / Cut</strong><br>
+&ldquo;Boosting&rdquo; a frequency range means increasing its volume relative to the rest of the signal.<br>
+&ldquo;Cutting&rdquo; a frequency range means decreasing its volume relative to the rest.</p>
+<p><strong>High-pass (filter)</strong><br>
+An EQ move that lets high frequencies &ldquo;pass&rdquo; through largely unchanged while reducing (cutting)<br>
+everything below a chosen frequency. Used, for example, to remove low rumble from a signal.</p>
+<p><strong>High-cut / Low-pass (filter)</strong><br>
+The mirror image of a high-pass: lets low frequencies pass through while reducing everything<br>
+above a chosen frequency.</p>
+<p><strong>De-ess / De-essing</strong><br>
+A specific EQ move that reduces harsh &ldquo;s&rdquo; and &ldquo;sh&rdquo; sibilant sounds in a vocal, typically by<br>
+cutting around 5–8 kHz. In this project&rsquo;s Mid/Side context, de-essing is done by cutting that<br>
+band in the <strong>Mid</strong> channel only, since sibilance is centered content — leaving any cymbal<br>
+brightness living in the Side channel untouched.</p>
+<p><strong>Mid/Side EQ</strong><br>
+Applying <em>different</em> EQ curves to the Mid and Side signals (rather than the same curve to both<br>
+L and R) — this lets an engineer change &ldquo;the center&rdquo; and &ldquo;the edges&rdquo; of a mix independently.<br>
+Example moves used in the notebooks: high-pass the Side below ~120 Hz for tighter, mono-safe<br>
+bass; cut 250–400 Hz in the Side for a cleaner, wider low end; boost 8–16 kHz in the Side for<br>
+&ldquo;air&rdquo; without brightening the vocal; cut 5–8 kHz in the Mid to de-ess without dulling the<br>
+cymbals; cut 200–400 Hz in the Mid for punchier drums without louder vocals.</p>
+<p><strong>Phase</strong><br>
+Describes the timing relationship of a wave — specifically, at what point in its cycle a<br>
+frequency component is, relative to some reference. Two signals that are &ldquo;in phase&rdquo; line up in<br>
+time; signals that are &ldquo;out of phase&rdquo; are shifted relative to each other, which can cause<br>
+partial or full cancellation when they&rsquo;re combined.</p>
+<p><strong>Group delay</strong><br>
+A side effect of ordinary (&ldquo;minimum-phase&rdquo;) EQ filters: they don&rsquo;t just change volume per<br>
+frequency (the intended effect) — they also delay <em>different</em> frequencies by <em>different</em><br>
+amounts. This frequency-dependent delay is called group delay. It&rsquo;s usually harmless in a plain<br>
+stereo EQ (since L and R get the same delay), but becomes audible in Mid/Side EQ, because<br>
+applying <em>different</em> filters to Mid and Side bakes <em>different</em> delays into each, which shifts<br>
+their timing relationship once they&rsquo;re recombined into L/R — causing transients to smear and<br>
+the stereo image to feel unstable (&ldquo;wobble&rdquo;).</p>
+<p><strong>Minimum-phase (EQ)</strong><br>
+The default, conventional type of EQ filter: efficient, but introduces group delay (see above),<br>
+which is the mechanism behind the &ldquo;phase trap&rdquo; in Mid/Side processing.</p>
+<p><strong>Linear-phase (also called zero-phase) EQ</strong><br>
+An EQ design that delays every frequency by the <em>same</em> amount, so the only thing it changes is<br>
+volume, not timing. This avoids the group-delay smearing problem described above, which is why<br>
+serious Mid/Side mastering tools offer a linear-phase option/toggle.</p>
+<p><strong>Oversampling (HiQ)</strong><br>
+A toggle found in some EQ plugins (e.g. Ableton&rsquo;s EQ Eight) that reduces some phase-related<br>
+artifacts but is explicitly <em>not</em> the same thing as true linear-phase EQ — the notebooks note<br>
+this distinction to avoid readers assuming the two are interchangeable.</p>
+<p><strong>Utility (device)</strong><br>
+An Ableton Live audio utility device used, among other things, to manually build a Mid/Side<br>
+encode/decode chain: setting its Width control to 0% passes only the Mid signal, and to 200%<br>
+passes only the Side signal (with one channel phase-flipped), which is the manual, mouse-driven<br>
+equivalent of the <code>mid_side()</code> / <code>from_mid_side()</code> functions used in the code.</p>
+<p><strong>EQ Eight</strong><br>
+A specific EQ plugin built into Ableton Live, mentioned because it includes a built-in Mid/Side<br>
+mode (each band&rsquo;s channel selector can be set to L/R, Mid-only, or Side-only) that reproduces<br>
+the notebook&rsquo;s <code>process_mid</code>/<code>process_side</code> code with a single click instead of custom code.</p>
+<hr>
+<h2 id="7-reverb-and-time-based-decay">7. Reverb and time-based decay</h2>
+<p><strong>Reverb (reverberation)</strong><br>
+The sound of a physical room: after the direct sound of a voice or instrument reaches your ear,<br>
+reflections off the walls, floor, and ceiling keep arriving for a short while afterward, each<br>
+one quieter than the last, before dying away entirely.</p>
+<p><strong>Decay tail</strong><br>
+The visible/audible fade after a note ends, caused by reverb — instead of energy dropping<br>
+instantly to silence, it fades out gradually over some period of milliseconds to seconds.</p>
+<p><strong>Decay slope</strong><br>
+The standard way engineers quantify a decay tail: how many dB the signal loses per second right<br>
+after a note ends. A steep, fast slope (e.g. −60 dB/sec) means the sound dies out almost<br>
+immediately — little or no reverb. A shallow, slow slope (e.g. −10 dB/sec) means the sound<br>
+lingers — a longer, &ldquo;wetter&rdquo; tail.</p>
+<p><strong>T60</strong><br>
+A single summary number derived from the decay slope: the time it would take for a sound to<br>
+decay by 60 dB at that rate. Used as shorthand for &ldquo;how long does the room ring.&rdquo;</p>
+<p><strong>&ldquo;Wet&rdquo; / &ldquo;Dry&rdquo;</strong><br>
+Informal engineering shorthand (used in the notebooks&rsquo; prose, e.g. &ldquo;wetter tail&rdquo;) for how much<br>
+reverb/effect is present in a sound. &ldquo;Wet&rdquo; means more reverb/effect is audible; &ldquo;dry&rdquo; means the<br>
+sound is closer to its original, untreated, close-mic&rsquo;d state.</p>
+<hr>
+<h2 id="8-ai-vocalinstrumental-separation-and-its-artifacts">8. AI vocal/instrumental separation and its artifacts</h2>
+<p><strong>Stem</strong><br>
+An individual isolated component of a mix — for example, &ldquo;the vocal stem&rdquo; or &ldquo;the instrumental<br>
+stem&rdquo; — produced either by a human engineer during the original recording/mixing process, or,<br>
+in this project&rsquo;s case, by an AI separation model applied after the fact to a finished stereo<br>
+mix.</p>
+<p><strong>Separation (AI vocal/instrumental separation)</strong><br>
+The process (performed by a machine-learning model) of taking one finished, mixed stereo track<br>
+and splitting it back into an estimated vocal stem and an estimated instrumental stem, without<br>
+ever having had access to the original, separately-recorded tracks.</p>
+<p><strong>Proxy</strong><br>
+A stand-in measurement used in place of the &ldquo;real&rdquo; thing you actually want to measure, when the<br>
+real thing isn&rsquo;t directly available. In this project, Mid/Side (<code>Mid_dB − Side_dB</code>) was used<br>
+early on as a <em>proxy</em> for real vocal-vs-instrumental prominence (<code>vocal_dB − instrumental_dB</code>),<br>
+because no isolated stems existed yet for some tracks.</p>
+<p><strong>Ground truth</strong><br>
+The real, verified, correct answer that a proxy or estimate is trying to approximate — for<br>
+example, real human-separated vocal/instrumental stems (where they exist) serve as ground truth<br>
+against which a Mid/Side proxy, or an AI separation tool&rsquo;s output, can be checked.</p>
+<p><strong>Calibration (check)</strong><br>
+The act of comparing a proxy&rsquo;s or a tool&rsquo;s output against ground truth, on the one case where<br>
+ground truth happens to be available, in order to estimate how far off the proxy/tool tends to<br>
+run in general.</p>
+<p><strong>Reconstruction fidelity</strong><br>
+A label-free way of auditing a separation tool&rsquo;s accuracy: since <code>vocal + instrumental</code> should<br>
+sum back to (approximately) the original mix if the split was clean and complete, you can add<br>
+the two output stems back together and compare that sum to the real original mix — with no<br>
+ground-truth stems required. A near-zero gap (in dB) means the tool accounted for almost<br>
+everything in the mix; a consistent negative gap means the reconstructed sum is quieter than the<br>
+original, i.e., some of the mix&rsquo;s energy didn&rsquo;t end up fully assigned to either stem.</p>
+<p><strong>Bleed (residual bleed / bleed-through)</strong><br>
+Content from one stem leaking into the other — for example, instrumental content that wasn&rsquo;t<br>
+fully removed from the vocal stem, so it&rsquo;s still faintly audible (&ldquo;bleeding through&rdquo;) even in<br>
+sections where the vocal stem should be silent. Detected in this project using <strong>spectral<br>
+flatness</strong>: a &ldquo;quiet&rdquo; vocal-stem frame with low flatness (tonal, structured energy) suggests<br>
+bleed rather than genuine noise floor.</p>
+<p><strong>Hard gate</strong><br>
+A discovered behavior of the separation tool (or its export step): whenever the model&rsquo;s<br>
+confidence that &ldquo;a vocal is present&rdquo; drops low enough, it appears to zero the output completely<br>
+(every sample becomes exactly 0.0 — literal digital silence, ~−infinity dB) rather than leaving<br>
+a faint, natural-sounding residual. This showed up uniformly across every track tested (21–31%<br>
+of all frames), which is why it was identified as an artifact of the <em>tool/pipeline itself</em><br>
+rather than a property of any individual song&rsquo;s mix.</p>
+<p><strong>Gate entry / Hard-gate entries</strong><br>
+The moment (timestamp) a vocal stem&rsquo;s signal transitions from real, audible content into the<br>
+tool&rsquo;s hard-gated (zeroed) silence — used in this project as a reliable marker for &ldquo;a phrase<br>
+just ended,&rdquo; since it&rsquo;s a clean, unambiguous binary event rather than a subjective judgment<br>
+call.</p>
+<hr>
+<h2 id="9-the-overall-research-method-vocabulary">9. The overall research-method vocabulary</h2>
+<p><strong>Hypothesis</strong><br>
+A proposed explanation that hasn&rsquo;t yet been fully verified — something the project sets out to<br>
+test, confirm, or rule out using measurements.</p>
+<p><strong>&ldquo;Confirmed&rdquo; (as used critically in these notebooks)</strong><br>
+Flags a conclusion the project <em>believed</em> was settled at the time, based on one analysis<br>
+technique, that later turned out to be incomplete or partly wrong once tested with a more<br>
+direct method. The notebooks use quotation marks around &ldquo;confirmed&rdquo; deliberately, as a running<br>
+theme about not trusting a single measurement too quickly.</p>
+<p><strong>Relative ranking (vs. absolute level/number)</strong><br>
+Two different things a measurement can get right or wrong. &ldquo;Absolute level&rdquo; means whether a<br>
+specific number is correct in its own right (e.g., &ldquo;the gap really is 3 dB&rdquo;). &ldquo;Relative<br>
+ranking&rdquo; means whether the <em>order</em> of several things compared to each other is correct (e.g.,<br>
+&ldquo;Track A really is behind Track B&rdquo;), even if none of the individual absolute numbers are<br>
+exactly right. A proxy can preserve relative ranking while still being wrong in absolute terms<br>
+— or, as this project discovered, it can fail at both.</p>
+<p><strong>Loose thread</strong><br>
+An observation noticed in passing during one analysis that isn&rsquo;t fully investigated at the<br>
+time, and is explicitly &ldquo;parked&rdquo; to be picked up properly once the right tools/vocabulary exist<br>
+— used repeatedly across these notebooks to describe questions deliberately deferred rather<br>
+than rushed.</p>
+  </article>
+</div>
+
+
+<a id="back-top" href="#" title="Back to top" aria-label="Back to top">↑</a>
+
+<script>
+(function () {
+  // ── Reading progress ──────────────────────────────────────
+  const bar = document.getElementById('progress');
+  window.addEventListener('scroll', () => {
+    const h = document.documentElement;
+    const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+    bar.style.width = pct + '%';
+  }, { passive: true });
+
+
+// ── Build TOC from headings ───────────────────────────────
+  const article = document.querySelector('article');
+  const toc     = document.getElementById('toc');
+  const headings = article.querySelectorAll('h1,h2,h3,h4');
+  let idx = 0;
+
+  headings.forEach(h => {
+    if (h.id === 'doc-title') return;
+    if (!h.id) { h.id = 'heading-' + (idx++); }
+    const li  = document.createElement('li');
+    const a   = document.createElement('a');
+    a.href    = '#' + h.id;
+    a.textContent = h.textContent;
+    a.className   = 'toc-' + h.tagName.toLowerCase();
+    
+    // Add native tooltip only if the text is truncated
+    a.addEventListener('mouseenter', function() {
+      if (this.scrollWidth > this.clientWidth) {
+        this.title = this.textContent;
+      } else {
+        this.removeAttribute('title');
+      }
+    });
+
+    li.appendChild(a);
+    toc.appendChild(li);
+  });
+
+  // ── Active TOC highlight on scroll ───────────────────────
+  const tocLinks = toc.querySelectorAll('a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      const link = toc.querySelector('a[href="#' + e.target.id + '"]');
+      if (link) link.classList.toggle('active', e.isIntersecting);
+    });
+  }, { rootMargin: '-10% 0px -80% 0px' });
+  headings.forEach(h => { if (h.id !== 'doc-title') observer.observe(h); });
+
+  // ── Back-to-top visibility ────────────────────────────────
+  const btt = document.getElementById('back-top');
+  window.addEventListener('scroll', () => {
+    btt.classList.toggle('visible', window.scrollY > 300);
+  }, { passive: true });
+  btt.addEventListener('click', e => {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // ── Sidebar toggle (mobile) ───────────────────────────────
+  document.getElementById('sidebar-toggle').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+  });
+
+// ── Copy buttons on code blocks & prose blocks ────────────
+  document.querySelectorAll('.codehilite, pre:not(.codehilite pre)').forEach(block => {
+    const btn  = document.createElement('button');
+    btn.className   = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.setAttribute('aria-label', 'Copy text');
+    block.style.position = 'relative';
+    block.prepend(btn);
+    
+    btn.addEventListener('click', () => {
+      // Find the actual pre element (it might be the block itself, or inside it)
+      const pre = block.tagName === 'PRE' ? block : block.querySelector('pre');
+      if (!pre) return;
+      
+      // Clone the node so we can remove the button from the copied text
+      const clone = pre.cloneNode(true);
+      const btnInClone = clone.querySelector('.copy-btn');
+      if (btnInClone) btnInClone.remove();
+      
+      navigator.clipboard.writeText(clone.innerText).then(() => {
+        btn.textContent = '✓ Copied';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+      });
+    });
+  });
+
+  
+  // ── Wrap tables for horizontal scroll ────────────────────
+  document.querySelectorAll('article table').forEach(t => {
+    const w = document.createElement('div');
+    w.className = 'table-wrap';
+    t.parentNode.insertBefore(w, t);
+    w.appendChild(t);
+  });
+
+  // ── Doc meta (word count + read time) ────────────────────
+  const words = article.innerText.trim().split(/\s+/).length;
+  const mins  = Math.max(1, Math.round(words / 200));
+  const meta  = document.getElementById('doc-meta');
+  if (meta) meta.textContent = words.toLocaleString() + ' words · ' + mins + ' min read';
+})();
+</script>
+
+</body>
+</html>

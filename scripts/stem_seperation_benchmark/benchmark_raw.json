@@ -1,0 +1,66 @@
+[
+  {
+    "method": "demucs_htdemucs",
+    "file": "elisa_maktooba_leek.mp3",
+    "audio_duration_s": 317.02,
+    "elapsed_s": 21.51,
+    "rtf": 14.738,
+    "peak_gpu_mb": 0.0
+  },
+  {
+    "method": "demucs_htdemucs",
+    "file": "يا دار مية - 28-07-2026.mp3",
+    "audio_duration_s": 262.56,
+    "elapsed_s": 17.67,
+    "rtf": 14.855,
+    "peak_gpu_mb": 0.0
+  },
+  {
+    "method": "demucs_htdemucs_ft",
+    "file": "elisa_maktooba_leek.mp3",
+    "audio_duration_s": 317.02,
+    "elapsed_s": 61.65,
+    "rtf": 5.142,
+    "peak_gpu_mb": 0.0
+  },
+  {
+    "method": "demucs_htdemucs_ft",
+    "file": "يا دار مية - 28-07-2026.mp3",
+    "audio_duration_s": 262.56,
+    "elapsed_s": 54.07,
+    "rtf": 4.856,
+    "peak_gpu_mb": 0.0
+  },
+  {
+    "method": "demucs_htdemucs_6s",
+    "file": "elisa_maktooba_leek.mp3",
+    "audio_duration_s": 317.02,
+    "elapsed_s": 21.61,
+    "rtf": 14.671,
+    "peak_gpu_mb": 0.0
+  },
+  {
+    "method": "demucs_htdemucs_6s",
+    "file": "يا دار مية - 28-07-2026.mp3",
+    "audio_duration_s": 262.56,
+    "elapsed_s": 21.48,
+    "rtf": 12.223,
+    "peak_gpu_mb": 0.0
+  },
+  {
+    "method": "audio_separator_bs_roformer",
+    "file": "elisa_maktooba_leek.mp3",
+    "audio_duration_s": 317.02,
+    "elapsed_s": 136.67,
+    "rtf": 2.32,
+    "peak_gpu_mb": 1617.7
+  },
+  {
+    "method": "audio_separator_bs_roformer",
+    "file": "يا دار مية - 28-07-2026.mp3",
+    "audio_duration_s": 262.56,
+    "elapsed_s": 115.19,
+    "rtf": 2.279,
+    "peak_gpu_mb": 1617.7
+  }
+]

@@ -1,0 +1,9 @@
+method,file,audio_duration_s,elapsed_s,rtf,peak_gpu_mb
+demucs_htdemucs,elisa_maktooba_leek.mp3,317.02,21.51,14.738,0.0
+demucs_htdemucs,يا دار مية - 28-07-2026.mp3,262.56,17.67,14.855,0.0
+demucs_htdemucs_ft,elisa_maktooba_leek.mp3,317.02,61.65,5.142,0.0
+demucs_htdemucs_ft,يا دار مية - 28-07-2026.mp3,262.56,54.07,4.856,0.0
+demucs_htdemucs_6s,elisa_maktooba_leek.mp3,317.02,21.61,14.671,0.0
+demucs_htdemucs_6s,يا دار مية - 28-07-2026.mp3,262.56,21.48,12.223,0.0
+audio_separator_bs_roformer,elisa_maktooba_leek.mp3,317.02,136.67,2.32,1617.7
+audio_separator_bs_roformer,يا دار مية - 28-07-2026.mp3,262.56,115.19,2.279,1617.7

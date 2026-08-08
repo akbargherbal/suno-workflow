@@ -1,0 +1,5 @@
+method,files,avg_elapsed_s,avg_rtf,avg_peak_gpu_mb,model_load_s
+demucs_htdemucs,2,19.59,14.8,0.0,21.1
+demucs_htdemucs_ft,2,57.86,5.0,0.0,68.57
+demucs_htdemucs_6s,2,21.54,13.45,0.0,23.19
+audio_separator_bs_roformer,2,125.93,2.3,1617.7,2.84
