@@ -9,6 +9,11 @@ Usage:
   python lyrics_search.py --regex "pattern"          # Regex search in title + lyrics
   python lyrics_search.py --list                     # List all track titles
   python lyrics_search.py --all                      # Export all lyrics
+  python lyrics_search.py --all --output-dir "D:/Lyrics"   # Choose where to save
+
+Paths passed via --manifest / --output-dir, or typed at the interactive
+prompts, may be wrapped in quotes (e.g. from Windows "Copy as path") —
+the enclosing quotes are stripped automatically.
 """
 
 import argparse
@@ -19,7 +24,25 @@ import sys
 from pathlib import Path
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
-OUTPUT_DIR = Path(__file__).resolve().parent.parent / "download" / "lyrics"
+DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent.parent / "download" / "lyrics"
+
+# Mutable "current" output directory. Starts as the default, can be changed at
+# runtime via --output-dir, the interactive 'outdir' command, or the startup prompt.
+OUTPUT_DIR = DEFAULT_OUTPUT_DIR
+
+
+def strip_quotes(raw: str) -> str:
+    """Strip whitespace and a single pair of enclosing quotes from a path string.
+
+    Handles the common case of pasting a path that Windows Explorer's
+    "Copy as path" wrapped in double quotes (or a user manually wrapping a
+    path in single/double quotes), e.g.:
+        "C:\\Users\\me\\workspace_manifest.json"  ->  C:\\Users\\me\\workspace_manifest.json
+    """
+    s = raw.strip()
+    if len(s) >= 2 and s[0] == s[-1] and s[0] in ("'", '"'):
+        s = s[1:-1].strip()
+    return s
 
 
 def discover_manifest(cli_path: str | None) -> Path:
@@ -36,7 +59,8 @@ def discover_manifest(cli_path: str | None) -> Path:
 
     # 1) CLI override
     if cli_path:
-        p = Path(cli_path)
+        cleaned = strip_quotes(cli_path)
+        p = Path(cleaned).expanduser()
         if p.is_file():
             return p.resolve()
         candidates.append(p)  # keep for the error message
@@ -78,6 +102,10 @@ def discover_manifest(cli_path: str | None) -> Path:
             if not user_path:
                 continue
 
+            user_path = strip_quotes(user_path)
+            if user_path.lower() in ("q", "quit", "exit"):
+                break
+
             p = Path(user_path).expanduser().resolve()
             if p.is_file():
                 print(f"  Found: {p}\n")
@@ -103,32 +131,68 @@ def load_tracks(manifest_path: str) -> list[dict]:
     return data.get("tracks", [])
 
 
+def set_output_dir(path: str) -> tuple[bool, str]:
+    """Validate and set the global OUTPUT_DIR. Returns (success, message)."""
+    global OUTPUT_DIR
+    cleaned = strip_quotes(path)
+    if not cleaned:
+        return False, "No path given."
+    p = Path(cleaned).expanduser()
+    try:
+        p.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        return False, f"Cannot use '{p}': {e}"
+    if not os.access(p, os.W_OK):
+        return False, f"'{p}' is not writable."
+    OUTPUT_DIR = p.resolve()
+    return True, f"Lyrics will be saved to: {OUTPUT_DIR}"
+
+
+def prompt_output_dir(default_dir: Path) -> None:
+    """Ask the user (interactive terminals only) where to save exported lyrics."""
+    if not sys.stdin.isatty():
+        return
+    print(f"\n  Lyrics will be saved to: {default_dir}")
+    try:
+        choice = input("  Press Enter to accept, or type a different folder: ").strip()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return
+    if not choice:
+        return
+    ok, msg = set_output_dir(choice)
+    print(f"  {'✔' if ok else '✗'} {msg}")
+
+
 def sanitize_filename(name: str) -> str:
     """Return a filesystem-safe version of the track title."""
     safe = re.sub(r'[\\/:*?"<>|]', "_", name.strip())
     safe = re.sub(r"_+", "_", safe)
+    safe = safe.rstrip(" .")  # trailing dots/spaces are invalid in Windows filenames
     return safe or "untitled"
 
 
 def save_lyrics(track: dict, index: int) -> Path:
     """Save a single track's lyrics to a .txt file and return the path."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    title = sanitize_filename(track["original_title"])
+    title = sanitize_filename(track.get("original_title", f"track_{index}"))
     filename = f"{index:02d}_{title}.txt"
     out_path = OUTPUT_DIR / filename
-    out_path.write_text(track["lyrics"], encoding="utf-8")
+    out_path.write_text(track.get("lyrics", ""), encoding="utf-8")
     return out_path
 
 
 def print_track_summary(track: dict, index: int) -> None:
     """Print a one-line summary of a track."""
-    print(f"  [{index:02d}] {track['original_title']}")
+    print(f"  [{index:02d}] {track.get('original_title', '(untitled)')}")
 
 
 def search_by_title(tracks: list[dict], query: str) -> list[tuple[int, dict]]:
     """Case-insensitive substring match on title."""
     q = query.strip().lower()
-    return [(i, t) for i, t in enumerate(tracks, 1) if q in t["original_title"].lower()]
+    return [
+        (i, t) for i, t in enumerate(tracks, 1) if q in t.get("original_title", "").lower()
+    ]
 
 
 def search_by_substring(tracks: list[dict], query: str) -> list[tuple[int, dict]]:
@@ -137,7 +201,7 @@ def search_by_substring(tracks: list[dict], query: str) -> list[tuple[int, dict]
     return [
         (i, t)
         for i, t in enumerate(tracks, 1)
-        if q in t["original_title"] or q in t["lyrics"]
+        if q in t.get("original_title", "") or q in t.get("lyrics", "")
     ]
 
 
@@ -151,7 +215,7 @@ def search_by_regex(tracks: list[dict], pattern: str) -> list[tuple[int, dict]]:
     return [
         (i, t)
         for i, t in enumerate(tracks, 1)
-        if compiled.search(t["original_title"]) or compiled.search(t["lyrics"])
+        if compiled.search(t.get("original_title", "")) or compiled.search(t.get("lyrics", ""))
     ]
 
 
@@ -170,26 +234,28 @@ def export_results(results: list[tuple[int, dict]]) -> None:
 # ── Interactive REPL ──────────────────────────────────────────────────────────
 
 BANNER = r"""
-╔═══════════════════════════════════════════════════════════╗
-║           Lyrics Search & Export  —  Interactive Mode     ║
-╠═══════════════════════════════════════════════════════════╣
-║  Commands:                                                ║
+╔════════════════════════════════════════════════════════════╗
+║           Lyrics Search & Export  —  Interactive Mode      ║
+╠════════════════════════════════════════════════════════════╣
+║  Commands:                                                 ║
 ║    title <query>     Search by title (substring)           ║
 ║    sub <query>       Substring search in title + lyrics    ║
 ║    regex <pattern>   Regex search in title + lyrics        ║
 ║    list              List all track titles                 ║
 ║    export [indices]  Export last results (or specific #s)  ║
 ║    show <index>      Print lyrics of track #index          ║
-║    all               Export all tracks                    ║
+║    all               Export all tracks                     ║
+║    outdir [path]     Show or change the save folder        ║
 ║    help              Show this help                        ║
 ║    quit / exit       Exit                                  ║
-╚═══════════════════════════════════════════════════════════╝
+╚════════════════════════════════════════════════════════════╝
 """
 
 
 def interactive_loop(tracks: list[dict]) -> None:
     """Run the interactive REPL."""
     print(BANNER)
+    prompt_output_dir(OUTPUT_DIR)
     last_results: list[tuple[int, dict]] = []
 
     while True:
@@ -249,10 +315,10 @@ def interactive_loop(tracks: list[dict]) -> None:
                 idx = int(arg)
                 track = tracks[idx - 1]
                 print(f"\n{'─' * 60}")
-                print(f"  Track [{idx:02d}]: {track['original_title']}")
-                print(f"  File  : {track['assigned_filename']}")
+                print(f"  Track [{idx:02d}]: {track.get('original_title', '(untitled)')}")
+                print(f"  File  : {track.get('assigned_filename', '(unknown)')}")
                 print(f"{'─' * 60}")
-                print(track["lyrics"])
+                print(track.get("lyrics", "(no lyrics found)"))
                 print(f"{'─' * 60}")
             except (ValueError, IndexError):
                 print(f"  ✗ Invalid index. Use 1-{len(tracks)}.")
@@ -261,6 +327,14 @@ def interactive_loop(tracks: list[dict]) -> None:
         if cmd == "all":
             all_results = [(i, t) for i, t in enumerate(tracks, 1)]
             export_results(all_results)
+            continue
+
+        if cmd == "outdir":
+            if arg.strip():
+                ok, msg = set_output_dir(arg)
+                print(f"  {'✔' if ok else '✗'} {msg}")
+            else:
+                print(f"  Current save folder: {OUTPUT_DIR}")
             continue
 
         print(f"  ✗ Unknown command: '{cmd}'. Type 'help' for available commands.")
@@ -349,11 +423,27 @@ def main() -> None:
         default=None,
         help="Path to workspace_manifest.json (auto-detected if omitted)",
     )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default=None,
+        help=f"Folder to save exported lyrics to (default: {DEFAULT_OUTPUT_DIR})",
+    )
 
     args = parser.parse_args()
 
+    if args.output_dir:
+        ok, msg = set_output_dir(args.output_dir)
+        if not ok:
+            print(f"  ✗ {msg}")
+            sys.exit(1)
+
     manifest_path = discover_manifest(args.manifest)
-    tracks = load_tracks(str(manifest_path))
+    try:
+        tracks = load_tracks(str(manifest_path))
+    except json.JSONDecodeError as e:
+        print(f"  ✗ '{manifest_path}' is not valid JSON: {e}")
+        sys.exit(1)
     print(f"  Loaded {len(tracks)} tracks from manifest.\n")
 
     # No search flag → default to interactive
