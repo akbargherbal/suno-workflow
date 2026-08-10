@@ -19,8 +19,81 @@ import sys
 from pathlib import Path
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
-MANIFEST_PATH = Path(__file__).resolve().parent.parent / "upload" / "workspace_manifest.json"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "download" / "lyrics"
+
+
+def discover_manifest(cli_path: str | None) -> Path:
+    """Locate workspace_manifest.json using a cascading strategy.
+
+    Search order:
+      1. Explicit --manifest CLI argument (if provided and exists)
+      2. Current working directory
+      3. Directory containing this script
+      4. Interactive prompt (only when stdin is a terminal)
+      5. Raise SystemExit with a helpful message
+    """
+    candidates: list[Path] = []
+
+    # 1) CLI override
+    if cli_path:
+        p = Path(cli_path)
+        if p.is_file():
+            return p.resolve()
+        candidates.append(p)  # keep for the error message
+
+    # 2) Current working directory
+    cwd_manifest = Path.cwd() / "workspace_manifest.json"
+    if cwd_manifest.is_file():
+        return cwd_manifest.resolve()
+    candidates.append(cwd_manifest)
+
+    # 3) Same directory as this script
+    script_manifest = Path(__file__).resolve().parent / "workspace_manifest.json"
+    if script_manifest.is_file():
+        return script_manifest.resolve()
+    candidates.append(script_manifest)
+
+    # 4) Interactive prompt (only if stdin is a real terminal)
+    if sys.stdin.isatty():
+        print(
+            "\n  workspace_manifest.json was not found automatically.\n"
+            "  Searched locations:"
+        )
+        for c in candidates:
+            print(f"    - {c}")
+        print()
+
+        for attempt in range(3):
+            try:
+                user_path = input(
+                    "  Enter the path to workspace_manifest.json (or 'q' to quit): "
+                ).strip()
+            except (EOFError, KeyboardInterrupt):
+                print()
+                break
+
+            if user_path.lower() in ("q", "quit", "exit"):
+                break
+
+            if not user_path:
+                continue
+
+            p = Path(user_path).expanduser().resolve()
+            if p.is_file():
+                print(f"  Found: {p}\n")
+                return p
+            else:
+                print(f"  File not found: {p}")
+
+    # 5) All avenues exhausted
+    tried = "\n    ".join(str(c) for c in candidates)
+    print(
+        f"\n  Error: Could not locate workspace_manifest.json.\n"
+        f"  Locations checked:\n    {tried}\n\n"
+        f"  Tip: Run this script from the directory that contains workspace_manifest.json,\n"
+        f"       or pass the path explicitly:  python lyrics_search.py --manifest /path/to/workspace_manifest.json\n"
+    )
+    sys.exit(1)
 
 
 def load_tracks(manifest_path: str) -> list[dict]:
@@ -62,7 +135,8 @@ def search_by_substring(tracks: list[dict], query: str) -> list[tuple[int, dict]
     """Substring search across both title and lyrics."""
     q = query.strip()
     return [
-        (i, t) for i, t in enumerate(tracks, 1)
+        (i, t)
+        for i, t in enumerate(tracks, 1)
         if q in t["original_title"] or q in t["lyrics"]
     ]
 
@@ -75,7 +149,8 @@ def search_by_regex(tracks: list[dict], pattern: str) -> list[tuple[int, dict]]:
         print(f"  ✗ Invalid regex: {e}")
         return []
     return [
-        (i, t) for i, t in enumerate(tracks, 1)
+        (i, t)
+        for i, t in enumerate(tracks, 1)
         if compiled.search(t["original_title"]) or compiled.search(t["lyrics"])
     ]
 
@@ -227,6 +302,7 @@ def _parse_indices(arg: str, total: int) -> list[int]:
 
 # ── CLI entry point ────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Search and export lyrics from workspace_manifest.json"
@@ -270,22 +346,25 @@ def main() -> None:
     parser.add_argument(
         "--manifest",
         type=str,
-        default=str(MANIFEST_PATH),
-        help=f"Path to manifest JSON (default: {MANIFEST_PATH})",
+        default=None,
+        help="Path to workspace_manifest.json (auto-detected if omitted)",
     )
 
     args = parser.parse_args()
 
-    if not os.path.isfile(args.manifest):
-        print(f"Error: manifest file not found at '{args.manifest}'")
-        sys.exit(1)
-
-    tracks = load_tracks(args.manifest)
+    manifest_path = discover_manifest(args.manifest)
+    tracks = load_tracks(str(manifest_path))
     print(f"  Loaded {len(tracks)} tracks from manifest.\n")
 
     # No search flag → default to interactive
-    if (not args.title and not args.sub and not args.regex
-            and not args.list_all and not args.export_all and not args.interactive):
+    if (
+        not args.title
+        and not args.sub
+        and not args.regex
+        and not args.list_all
+        and not args.export_all
+        and not args.interactive
+    ):
         args.interactive = True
 
     if args.interactive:
