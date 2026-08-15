@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>الدليل السريع لتحويل القصائد العربية الكلاسيكية إلى أغاني Suno</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Reset & base ──────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* Palette — dark editorial */
+      --bg:          #0f1117;
+      --surface:     #161b27;
+      --surface2:    #1e2535;
+      --border:      #2a3348;
+      --accent:      #e8c87d;        /* warm gold */
+      --accent2:     #6eb5ff;        /* sky blue for links / inline code */
+      --text:        #d4dce8;
+      --text-muted:  #7a8aa0;
+      --text-strong: #eef2f8;
+
+      /* Typography */
+      --font-body:   'DM Sans', sans-serif;
+      --font-head:   'Fraunces', Georgia, serif;
+      --font-mono:   'JetBrains Mono', 'Fira Code', monospace;
+
+      /* Layout */
+      --content-max: 860px;
+      --sidebar-w:   260px;
+      --gap:         2rem;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: clamp(16px, 1.1vw, 18px);
+      line-height: 1.8;
+      text-align: right;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Progress bar ──────────────────────────────────────── */
+    #progress {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      z-index: 1000;
+      transition: width 0.1s linear;
+    }
+
+    /* ── Sidebar TOC ───────────────────────────────────────── */
+    #sidebar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: var(--sidebar-w);
+      height: 100vh;
+      overflow-y: auto;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      padding: 2rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 100;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+      transition: width 0.25s ease, padding 0.25s ease;
+    }
+
+    #sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    #sidebar-title {
+      font-family: var(--font-head);
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    #sidebar-collapse-btn {
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.85rem;
+      line-height: 1;
+      transition: color 0.15s, border-color 0.15s, transform 0.25s ease;
+    }
+    #sidebar-collapse-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* ── Collapsed sidebar state ───────────────────────────── */
+    #sidebar.collapsed {
+      width: 56px;
+      padding: 2rem 0.85rem;
+      overflow: hidden;
+    }
+    #sidebar.collapsed #sidebar-header { justify-content: center; }
+    #sidebar.collapsed #sidebar-title,
+    #sidebar.collapsed #toc { display: none; }
+    #sidebar.collapsed #sidebar-collapse-btn { transform: rotate(180deg); }
+    #sidebar.collapsed ~ #main {
+      margin-right: 56px !important;
+    }
+
+    #toc { list-style: none; }
+    #toc li { line-height: 1.4; }
+    #toc a {
+      display: block;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #toc a:hover, #toc a.active {
+      background: var(--surface2);
+      color: var(--text-strong);
+    }
+    #toc .toc-h2 { padding-right: 0.5rem; }
+    #toc .toc-h3 { padding-right: 1.25rem; font-size: 0.77rem; }
+    #toc .toc-h4 { padding-right: 2rem;   font-size: 0.73rem; color: var(--border); }
+
+    /* ── Main content ──────────────────────────────────────── */
+    #main {
+      margin-right: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      padding: 4rem var(--gap) 6rem;
+      transition: margin 0.25s ease;
+    }
+
+    article {
+      width: 100%;
+      max-width: var(--content-max);
+    }
+
+    /* ── Header strip ──────────────────────────────────────── */
+    #doc-header {
+      margin-bottom: 3.5rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    #doc-header::before {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      right: 0;
+      width: 80px;
+      height: 1px;
+      background: var(--accent);
+    }
+    #doc-title {
+      font-family: var(--font-head);
+      font-size: clamp(2rem, 3.5vw, 3.2rem);
+      font-weight: 600;
+      color: var(--text-strong);
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+    }
+    #doc-meta {
+      margin-top: 0.6rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* ── Headings ──────────────────────────────────────────── */
+    h1, h2, h3, h4, h5, h6 {
+      font-family: var(--font-head);
+      color: var(--text-strong);
+      line-height: 1.2;
+      font-weight: 600;
+      scroll-margin-top: 2rem;
+    }
+    h1 { font-size: clamp(1.7rem, 2.5vw, 2.4rem); margin: 3rem 0 1.2rem; }
+    h2 {
+      font-size: clamp(1.35rem, 2vw, 1.85rem);
+      margin: 2.8rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h3 { font-size: clamp(1.1rem, 1.5vw, 1.4rem); margin: 2.2rem 0 0.8rem; }
+    h4 { font-size: 1.05rem; margin: 1.8rem 0 0.6rem; color: var(--accent); }
+    h5, h6 { font-size: 0.95rem; margin: 1.5rem 0 0.5rem; font-weight: 500; }
+
+    /* ── Paragraphs & text ─────────────────────────────────── */
+    p { margin-bottom: 1.25rem; }
+    strong { color: var(--text-strong); font-weight: 600; }
+    em { font-style: italic; color: var(--accent); }
+    del { color: var(--text-muted); }
+    mark {
+      background: rgba(232, 200, 125, 0.2);
+      color: var(--accent);
+      border-radius: 2px;
+      padding: 0 3px;
+    }
+
+    /* ── Links ─────────────────────────────────────────────── */
+    a {
+      color: var(--accent2);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.15s;
+    }
+    a:hover { border-bottom-color: var(--accent2); }
+
+    /* ── Lists ─────────────────────────────────────────────── */
+    ul, ol {
+      margin: 0.75rem 0 1.25rem;
+      padding-right: 1.8rem;
+    }
+    li { margin-bottom: 0.4rem; }
+    li > ul, li > ol { margin-bottom: 0; }
+    ul li::marker { color: var(--accent); }
+    ol li::marker { color: var(--accent); font-family: var(--font-mono); font-size: 0.85em; }
+
+    /* ── Inline code ───────────────────────────────────────── */
+    /* :not(pre) guard prevents this rule from bleeding into plain
+       fenced blocks where <code> is a direct child of <pre>.      */
+    :not(pre) > code:not([class]) {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      background: var(--surface2);
+      color: var(--accent2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.15em 0.45em;
+    }
+
+    /* ── Code blocks (Pygments) ────────────────────────────── */
+    .codehilite {
+      background: #111827 !important;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 1.75rem 0;
+      position: relative;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    }
+
+    .code-wrap {
+      position: relative;
+    }
+
+    .code-lang {
+      position: absolute;
+      top: 0;
+      right: 0;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 0.5rem 1rem;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid var(--border);
+      border-left: 1px solid var(--border);
+      border-bottom-left-radius: 6px;
+      user-select: none;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 0.5rem;
+      left: 0.75rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      z-index: 2;
+    }
+    .copy-btn:hover { background: var(--border); color: var(--text-strong); }
+    .copy-btn.copied { color: #7dffaa; border-color: #7dffaa44; }
+
+    .codehilite pre {
+      margin: 0 !important;
+      padding: 2.8rem 1.5rem 1.5rem !important;
+      font-family: var(--font-mono) !important;
+      font-size: clamp(0.78rem, 0.9vw, 0.88rem) !important;
+      line-height: 1.7 !important;
+      overflow-x: auto;
+      tab-size: 4;
+    }
+
+    /* ── Plain fenced blocks / Prose blocks ───────────────── */
+        /* ── Plain fenced blocks (no lang tag) ────────────────────
+       Default monospace treatment when --prose is NOT active.
+    ─────────────────────────────────────────────────────────── */
+    pre:not(.codehilite pre) {
+      background: #111827;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.86rem;
+      line-height: 1.7;
+      margin: 1.75rem 0;
+    }
+
+    /* ── Blockquotes ───────────────────────────────────────── */
+    blockquote {
+      border-right: 3px solid var(--accent);
+      margin: 1.5rem 0;
+      padding: 1rem 1.5rem;
+      background: var(--surface2);
+      border-radius: 0 8px 8px 0;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+    blockquote p { margin-bottom: 0; }
+
+    /* ── Tables ────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; margin: 1.75rem 0; border-radius: 10px; border: 1px solid var(--border); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    thead {
+      background: var(--surface2);
+    }
+    th {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--accent);
+      padding: 0.8rem 1.1rem;
+      text-align: right;
+      border-bottom: 1px solid var(--border);
+      font-weight: 500;
+    }
+    td {
+      padding: 0.7rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    /* ── Horizontal rule ───────────────────────────────────── */
+    hr {
+      border: none;
+      height: 1px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+      margin: 2.5rem 0;
+    }
+
+    /* ── Task lists ────────────────────────────────────────── */
+    .task-list-item input[type="checkbox"] {
+      accent-color: var(--accent);
+      margin-left: 0.5rem;
+    }
+
+    /* ── Images ────────────────────────────────────────────── */
+    img {
+      max-width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      display: block;
+      margin: 1.5rem auto;
+    }
+
+    /* ── Footnotes ─────────────────────────────────────────── */
+    .footnote {
+      border-top: 1px solid var(--border);
+      margin-top: 3rem;
+      padding-top: 1rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Back to top ───────────────────────────────────────── */
+    #back-top {
+      position: fixed;
+      bottom: 2rem;
+      left: 2rem;
+      width: 40px;
+      height: 40px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 1.1rem;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.2s, transform 0.2s, color 0.15s;
+      z-index: 200;
+    }
+    #back-top.visible { opacity: 1; transform: translateY(0); }
+    #back-top:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* ── Home button ────────────────────────────────────────── */
+    #home-btn {
+      position: fixed;
+      bottom: 5.5rem;
+      left: 2rem;
+      width: 40px;
+      height: 40px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 1.1rem;
+      opacity: 1;
+      transition: color 0.15s, border-color 0.15s;
+      z-index: 200;
+    }
+    #home-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* ── Sidebar toggle (hidden on wide screens) ───────────── */
+    #sidebar-toggle {
+      display: none;
+      position: fixed;
+      bottom: 2rem;
+      right: 1rem;
+      z-index: 300;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.4rem 0.75rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+      cursor: pointer;
+    }
+
+    /* ── Scrollbar ─────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── Animations ────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+    article { animation: fadeUp 0.45s ease both; }
+
+    /* ── Responsive ────────────────────────────────────────── */
+    @media (max-width: 1100px) {
+      :root { --sidebar-w: 220px; }
+    }
+    @media (max-width: 820px) {
+      #sidebar { transform: translateX(100%); transition: transform 0.25s; }
+      #sidebar.open { transform: translateX(0); }
+      #sidebar.collapsed { width: var(--sidebar-w); padding: 2rem 1.25rem; }
+      #sidebar.collapsed #sidebar-title,
+      #sidebar.collapsed #toc { display: block; }
+      #sidebar.collapsed #sidebar-collapse-btn { transform: none; }
+      #sidebar.collapsed ~ #main { margin-right: 0 !important; }
+      #main { margin-right: 0 !important; }
+      #sidebar-toggle { display: block; }
+      #sidebar-collapse-btn { display: none; }
+    }
+
+    /* ── Pygments injected ─────────────────────────────────── */
+    pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #ffffcc }
+.codehilite { background: #282C34; color: #ABB2BF }
+.codehilite .c { color: #7F848E } /* Comment */
+.codehilite .err { color: #ABB2BF } /* Error */
+.codehilite .esc { color: #ABB2BF } /* Escape */
+.codehilite .g { color: #ABB2BF } /* Generic */
+.codehilite .k { color: #C678DD } /* Keyword */
+.codehilite .l { color: #ABB2BF } /* Literal */
+.codehilite .n { color: #E06C75 } /* Name */
+.codehilite .o { color: #56B6C2 } /* Operator */
+.codehilite .x { color: #ABB2BF } /* Other */
+.codehilite .p { color: #ABB2BF } /* Punctuation */
+.codehilite .ch { color: #7F848E } /* Comment.Hashbang */
+.codehilite .cm { color: #7F848E } /* Comment.Multiline */
+.codehilite .cp { color: #7F848E } /* Comment.Preproc */
+.codehilite .cpf { color: #7F848E } /* Comment.PreprocFile */
+.codehilite .c1 { color: #7F848E } /* Comment.Single */
+.codehilite .cs { color: #7F848E } /* Comment.Special */
+.codehilite .gd { color: #ABB2BF } /* Generic.Deleted */
+.codehilite .ge { color: #ABB2BF } /* Generic.Emph */
+.codehilite .ges { color: #ABB2BF } /* Generic.EmphStrong */
+.codehilite .gr { color: #ABB2BF } /* Generic.Error */
+.codehilite .gh { color: #ABB2BF } /* Generic.Heading */
+.codehilite .gi { color: #ABB2BF } /* Generic.Inserted */
+.codehilite .go { color: #ABB2BF } /* Generic.Output */
+.codehilite .gp { color: #ABB2BF } /* Generic.Prompt */
+.codehilite .gs { color: #ABB2BF } /* Generic.Strong */
+.codehilite .gu { color: #ABB2BF } /* Generic.Subheading */
+.codehilite .gt { color: #ABB2BF } /* Generic.Traceback */
+.codehilite .kc { color: #E5C07B } /* Keyword.Constant */
+.codehilite .kd { color: #C678DD } /* Keyword.Declaration */
+.codehilite .kn { color: #C678DD } /* Keyword.Namespace */
+.codehilite .kp { color: #C678DD } /* Keyword.Pseudo */
+.codehilite .kr { color: #C678DD } /* Keyword.Reserved */
+.codehilite .kt { color: #E5C07B } /* Keyword.Type */
+.codehilite .ld { color: #ABB2BF } /* Literal.Date */
+.codehilite .m { color: #D19A66 } /* Literal.Number */
+.codehilite .s { color: #98C379 } /* Literal.String */
+.codehilite .na { color: #E06C75 } /* Name.Attribute */
+.codehilite .nb { color: #E5C07B } /* Name.Builtin */
+.codehilite .nc { color: #E5C07B } /* Name.Class */
+.codehilite .no { color: #E06C75 } /* Name.Constant */
+.codehilite .nd { color: #61AFEF } /* Name.Decorator */
+.codehilite .ni { color: #E06C75 } /* Name.Entity */
+.codehilite .ne { color: #E06C75 } /* Name.Exception */
+.codehilite .nf { color: #61AFEF; font-weight: bold } /* Name.Function */
+.codehilite .nl { color: #E06C75 } /* Name.Label */
+.codehilite .nn { color: #E06C75 } /* Name.Namespace */
+.codehilite .nx { color: #E06C75 } /* Name.Other */
+.codehilite .py { color: #E06C75 } /* Name.Property */
+.codehilite .nt { color: #E06C75 } /* Name.Tag */
+.codehilite .nv { color: #E06C75 } /* Name.Variable */
+.codehilite .ow { color: #56B6C2 } /* Operator.Word */
+.codehilite .pm { color: #ABB2BF } /* Punctuation.Marker */
+.codehilite .w { color: #ABB2BF } /* Text.Whitespace */
+.codehilite .mb { color: #D19A66 } /* Literal.Number.Bin */
+.codehilite .mf { color: #D19A66 } /* Literal.Number.Float */
+.codehilite .mh { color: #D19A66 } /* Literal.Number.Hex */
+.codehilite .mi { color: #D19A66 } /* Literal.Number.Integer */
+.codehilite .mo { color: #D19A66 } /* Literal.Number.Oct */
+.codehilite .sa { color: #98C379 } /* Literal.String.Affix */
+.codehilite .sb { color: #98C379 } /* Literal.String.Backtick */
+.codehilite .sc { color: #98C379 } /* Literal.String.Char */
+.codehilite .dl { color: #98C379 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #98C379 } /* Literal.String.Doc */
+.codehilite .s2 { color: #98C379 } /* Literal.String.Double */
+.codehilite .se { color: #98C379 } /* Literal.String.Escape */
+.codehilite .sh { color: #98C379 } /* Literal.String.Heredoc */
+.codehilite .si { color: #98C379 } /* Literal.String.Interpol */
+.codehilite .sx { color: #98C379 } /* Literal.String.Other */
+.codehilite .sr { color: #98C379 } /* Literal.String.Regex */
+.codehilite .s1 { color: #98C379 } /* Literal.String.Single */
+.codehilite .ss { color: #98C379 } /* Literal.String.Symbol */
+.codehilite .bp { color: #E5C07B } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #56B6C2; font-weight: bold } /* Name.Function.Magic */
+.codehilite .vc { color: #E06C75 } /* Name.Variable.Class */
+.codehilite .vg { color: #E06C75 } /* Name.Variable.Global */
+.codehilite .vi { color: #E06C75 } /* Name.Variable.Instance */
+.codehilite .vm { color: #E06C75 } /* Name.Variable.Magic */
+.codehilite .il { color: #D19A66 } /* Literal.Number.Integer.Long */
+
+
+  </style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<!-- Sidebar -->
+<nav id="sidebar" aria-label="Table of contents">
+  <div id="sidebar-header">
+    <div id="sidebar-title">Contents</div>
+    <button id="sidebar-collapse-btn" aria-label="Collapse sidebar" title="Collapse sidebar">◂</button>
+  </div>
+  <ul id="toc"></ul>
+</nav>
+
+<button id="sidebar-toggle" aria-label="Toggle sidebar">☰ TOC</button>
+
+<!-- Main -->
+<div id="main">
+  <article>
+    <header id="doc-header">
+      <h1 id="doc-title">الدليل السريع لتحويل القصائد العربية الكلاسيكية إلى أغاني Suno</h1>
+      <div id="doc-meta"></div>
+    </header>
+
+    <h1 id="suno">الدليل السريع لتحويل القصائد العربية الكلاسيكية إلى أغاني Suno</h1>
+<h3 id="json">(من النص المحقق إلى ملف JSON النهائي المهندس)</h3>
+<blockquote>
+<p><strong>الهدف من هذا الدليل:</strong> توفير مسار عمل تنفيذي وسريع (Playbook) للمستخدم وللنموذج اللغوي (LLM)، يوضح الخطوات الدقيقة لتحويل أي نص شعري كلاسيكي محقق ومشكول بالكامل إلى ملف <code>JSON</code> جاهز للتوليد الموسيقي في منصة Suno، بالاعتماد على المنهجية المثبتة في المشاريع السابقة (النابغة، الحارث، عنترة، عمرو بن كلثوم، الشنفرى).</p>
+</blockquote>
+<hr>
+<h2 id="_1">📌 الفرضية الأساسية (نقطة الانطلاق)</h2>
+<p>يبدأ العمل دائماً بوجود <strong>النص المحقق والمشكول تشكيلاً كاملاً</strong>، المخزن في مصفوفة بيانات مهيكلة (كل بيت عبارة عن زوج من: الصدر والعجز) في ملف مثل <code>verified_poem_text.py</code>.</p>
+<hr>
+<h2 id="1-thematic-segmentation">1. المعايرة والتقطيع الموضوعي (Thematic Segmentation)</h2>
+<p>لا يتم تقطيع القصيدة عشوائياً بعدد أبيات متساوٍ، بل بالاعتماد على <strong>الوحدات الدلالية وأبيات التخلص (التحول)</strong> مع معايرة الكثافة وفق طول القصيدة:</p>
+<ol>
+<li><strong>معايرة عدد الأقسام (Sizing Benchmark):</strong><br>
+   - القاعدة العامة: <strong>8 إلى 12 بيتاً لكل قسم</strong> (حوالي 3 إلى 4 دقائق غناء).<br>
+   - المعايرة القياسية:<ul>
+<li>القصائد الطويلة جداً (110–120 بيتاً كعنترة وابن كلثوم) ← <strong>9 إلى 10 أقسام</strong>.</li>
+<li>القصائد المتوسطة (60–75 بيتاً كالشنفرى) ← <strong>7 إلى 8 أقسام كحد أقصى</strong>.</li>
+</ul>
+</li>
+<li><strong>تحديد أبيات التحول والدمج:</strong><br>
+   - رصد مواضع التخلص وانتقال الشاعر بين الأغراض (النسيب، الرحلة، الفخر، الصيد، الرثاء).<br>
+   - دمج المقاطع المتجاورة القصيرة (التي تقل عن 5 أبيات) في قسم أكبر ذي وحدة موضوعية متماسكة، لتجنب تفتيت العمل إلى مقاطع شديدة القصر.</li>
+</ol>
+<hr>
+<h2 id="2-maqam-arc">2. بناء القوس المقامي وحسم المقاطع المركبة (Maqam Arc)</h2>
+<p>يتم اختيار المقامات <strong>حصرياً من 4 مقامات أساسية</strong> قابلة للدمج المتزن مع التوزيع الأوركسترالي/الروك:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">الطابع / المزاج الدلالي</th>
+<th style="text-align: left;">المقام المناسب</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>حنين، شوق، رثاء، حزن عميق، رثاء جماعي</strong></td>
+<td style="text-align: left;"><strong>الحجاز (Hijaz)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>سرد هادئ، وصف، تأمل، حوار داخلي</strong></td>
+<td style="text-align: left;"><strong>نهاوند (Nahawand)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>فخر، حماسة، اعتزاز، انتصار، زهد وعزة</strong></td>
+<td style="text-align: left;"><strong>العجم (Ajam)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>توتر، ترقب، رهبة، جلَد، أهوال الليل والظلام</strong></td>
+<td style="text-align: left;"><strong>الكرد (Kurd)</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="_2">قواعد بناء القوس المقامي:</h3>
+<ol>
+<li><strong>مقام واحد لكل قسم:</strong> يُمنع تغيير المقام في منتصف القسم الواحد.</li>
+<li><strong>حسم المقاطع المركبة (التي دُمج فيها غرضان):</strong><br>
+   - <strong>المعيار المعتمد (الأغلبية العددية):</strong> إذا جمع القسم بين مشاعر متباينة (مثل: 4 أبيات فراق + 9 أبيات فخر بالرفاق)، يُحسم المقام للغرض الغالب عددياً (<strong>العجم</strong>).</li>
+<li><strong>تصميم القوس الكلي للقصيدة (Musical Arc):</strong><br>
+   - اعتماد <strong>إطار دائري (Circular Frame)</strong> متى أمكن (مثل: افتتاح القصيدة بالعجم وختامها بالعجم كلازمة فخر).<br>
+   - حجز المقامات ذات التلوين الشديد والمميز (مثل <strong>الحجاز</strong>) للحظات العاطفية المنفردة والاستثنائية في القصيدة (كمشهد الذئاب في اللامية) لتعظيم أثرها الدرامي.</li>
+</ol>
+<hr>
+<h2 id="3-orthographic-glitch-scan">3. المسح الإملائي الصوتي (Orthographic Glitch Scan)</h2>
+<p>قبل هندسة الكلمات، يتم مسح النص لرصد الكلمات التي تسبب عيوب نطق شائعة في Suno وتصحيحها رسمياً داخل صندوق الكلمات فقط:</p>
+<ol>
+<li><strong>اللام المشددة الناتجة عن &ldquo;ال&rdquo; التعريف + جذر يبدأ بلام (مثل: الليل، اللعن):</strong><br>
+   - <strong>المشكلة:</strong> ينطقها الموديل بلام خفيفة تشبه اللام الإنجليزية.<br>
+   - <strong>العلاج:</strong> كتابتها بالرسم العثماني القرآني (ألف وصل <code>ٱ</code> + لام واحدة مشددة + سكون قرآني صغير <code>ۡ</code>):<ul>
+<li><code>وَاللَّيْلُ</code> ← <code>وَٱلَّيۡلُ</code></li>
+</ul>
+</li>
+<li><strong>استثناء الضمائر الموصولة (الَّتِي / الَّذِي / اللَّاتِي):</strong><br>
+   - <strong>القاعدة:</strong> تُترك برسمها القياسي كما هي؛ لأن التضعيف فيها ليس ناتجاً عن دخول أداة التعريف على جذر لامي.</li>
+<li><strong>واو عمرو الفارقة:</strong><br>
+   - تُحذف الواو في صندوق الكلمات إذا كان الاسم مشكولاً (<code>عَمْرٍ</code> / <code>عَمْرٌ</code>) منعاً لنطق الواو كحرف مد.</li>
+</ol>
+<hr>
+<h2 id="4-baseline-checkpoint">4. نقطة المراجعة: وثيقة التأسيس (Baseline Checkpoint)</h2>
+<p>يقوم النموذج اللغوي بتوليد جدول ملخص (ملف <code>baseline.md</code>) يوثق:</p>
+<ul>
+<li>جدول الأقسام النهائي (رقم القسم، نطاق الأبيات، عدد الأبيات، العنوان، المقام).</li>
+<li>قائمة التعديلات الإملائية الصوتية وتوثيق مواضعها.</li>
+<li>يُعرض هذا الجدول على المستخدم للاعتماد النهائي قبل بدء هندسة الكلمات.</li>
+</ul>
+<hr>
+<h2 id="5-lyrics-box-engineering">5. هندسة صندوق الكلمات (Lyrics Box Engineering)</h2>
+<p>يُصاغ صندوق الكلمات لكل قسم داخل المخرج النهائي بدقة هندسية صارمة وفق الهيكل التالي:</p>
+<div class="codehilite"><pre><span></span><code>///***///
+[Intro | single clean guitar | close-mic&#39;d, plate reverb, short decay]
+(البيت الأول من القسم)
+(البيت الأول - العجز ينتهي بـ ...)
+
+[Verse 1 | (وصف الصوت) | (الآلات المرافقة)]
+(البيت الأول مكرر كـ Buffer-in)
+...
+(بقية أبيات المقطع الأول)
+
+[Chorus | (صوت تصاعدي/حماسي) | (تصاعد الآلات — اسم المقام)]
+(أبيات مركز الثقل العاطفي/الفخر)
+...
+
+[Verse 2]
+(الأبيات المتبقية من القسم)
+...
+
+[Outro | deep male vocals | clean electric guitar]
+(تكرار البيت الأخير كـ Buffer-out)
+</code></pre></div>
+
+<h3 id="tags-rules">القواعد الذهبية للوسوم (Tags Rules):</h3>
+<ol>
+<li><strong>وسم البداية الثابت (Anchor Intro):</strong><br>
+   - يجب أن يبدأ دائماً بـ <code>///***///</code> ثم وسم هندسي مكاني يحدد المايك والمساحة:<br>
+<code>[Intro | single clean guitar | close-mic'd, plate reverb, short decay]</code><br>
+     متبوعاً مباشرة بالبيت الأول (بدون همهمة أو تمهيد صوتي).</li>
+<li><strong>البنية الثلاثية الصارمة للوسوم:</strong><br>
+<code>[Section | vocal quality | instrumentation]</code> (ممنوع دمج الصفات خارج خاناتها).</li>
+<li><strong>تثبيت صفة الصوت مرة واحدة (Vocal Anchor):</strong><br>
+   - تُذكر صفة الصوت عند <code>[Verse 1]</code> و<code>[Chorus]</code> كمرساة، وتُترك الترويسات اللاحقة مثل <code>[Verse 2]</code> مجردة بدون تكرار أو تصعيد في الصفات (تجنباً لارتفاع حساسية المايك وتشوه الصوت).</li>
+<li><strong>كسر جاذبية سونو (Gravitational Well Hack):</strong><br>
+   - يُذكر <strong>اسم المقام صراحةً</strong> داخل وسم التحول الأساسي (غالباً في <code>[Chorus]</code>) مثل:<br>
+<code>[Chorus | triumphant soaring vocals | full orchestral swell — Ajam]</code><br>
+     هذا الربط بين الآلات الغربية واسم المقام هو ما يمنع الموديل من الانجراف نحو اللحن الغربي التقليدي.</li>
+<li><strong>أفعال الامتداد لا أفعال الطرق:</strong><br>
+   - يُمنع استخدام أفعال مثل (<code>hit</code>, <code>crash</code>, <code>slam</code>).<br>
+   - تُستخدم أفعال البناء والاستدامة حصراً: (<code>swell</code>, <code>surge</code>, <code>build</code>, <code>rise</code>, <code>resolve</code>).</li>
+<li><strong>مدود الروي (Melisma):</strong><br>
+   - تُضاف ثلاث نقاط <code>...</code> في نهاية عجز كل بيت لإجبار الذكاء الاصطناعي على مدّ الحرف الأخير والتنفس بدلاً من الاستعجال.</li>
+<li><strong>أبيات التبطين (Buffer Verses):</strong><br>
+   - تكرار البيت الأول في البداية (<code>[Intro]</code> ثم <code>[Verse 1]</code>) والبيت الأخير في الـ <code>[Outro]</code> لتوفير مساحة صوتية للقص والدمج المتداخل (Crossfade) لاحقاً في Audacity.</li>
+</ol>
+<hr>
+<h2 id="6-json-output-contract">6. استخراج ملف JSON النهائي (Output Contract)</h2>
+<p>تُجمع كل الأقسام في ملف JSON واحد مطابق تماماً للمخطط التالي:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;sections&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;section_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;maqam&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Ajam&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;الوداع والالتحاق بالرفاق الحقيقيين&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;mood&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Proud, Defiant, Resolute&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;lyrics&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;///***///\n[Intro | single clean guitar | close-mic&#39;d, plate reverb, short decay]\nأَقِيمُوا بَنِي أُمِّي صُدُورَ مَطِيِّكُمْ\nفَإِنِّي إِلَى قَوْمٍ سِوَاكُمْ لَأَمْيَلُ...\n\n[Verse 1 | powerful resonant vocals | distorted guitar and steady bass]\n...&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<hr>
+<h2 id="7-style-prompt-generation">7. توليد برومبتات النمط عبر الأداة (Style Prompt Generation)</h2>
+<p>عند الانتقال إلى واجهة Suno، يتم تشغيل سكربت <code>maqam_prompt_generator.py</code> لتوليد برومبت النمط لكل قسم بناءً على مقامه والبيت الذي يبدأ به:</p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>maqam_prompt_generator.py<span class="w"> </span>--standard
+</code></pre></div>
+
+<ul>
+<li>يُختار المقام المطلوب (1: Hijaz, 2: Nahawand, 3: Ajam, 4: Kurd).</li>
+<li>يُدخل الشطر الأول ليبدأ به الموديل (<code>[START_ON: "..."]</code>).</li>
+<li>يُنسخ الـ Positive Prompt في خانة الـ Style والـ Exclude Prompt في خانة الاستبعاد.</li>
+<li>تُوضع الكلمات المهندسة من ملف الـ JSON داخل صندوق الـ Lyrics.</li>
+</ul>
+<hr>
+<h2 id="checklist">📋 قائمة التحقق النهائية قبل التوليد (Checklist)</h2>
+<ul>
+<li>[ ] عدد الأقسام متوازن ومناسب لطول القصيدة (معايرة كثافة الأبيات).</li>
+<li>[ ] كل قسم يحمل مقاماً واحداً من المقامات الأربعة المعتمدة.</li>
+<li>[ ] تم تطبيق تصحيحات الرسم العثماني للكلمات المشكلة المشددة (<code>وَٱلَّيۡلُ</code>).</li>
+<li>[ ] بداية كل صندوق كلمات تحتوي على الفاصل <code>///***///</code> يليه تاغ الـ Intro الميكروفوني الثابت.</li>
+<li>[ ] تاغ الـ Chorus الرئيسي يحمل اسم المقام لكسر جاذبية سونو (<code>— Ajam</code>, <code>— Kurd</code>, &hellip;).</li>
+<li>[ ] جميع أعجاز الأبيات تنتهي بمد الروي <code>...</code>.</li>
+<li>[ ] عدم وجود أي أفعال إيقاعية حادة (<code>hit</code>/<code>crash</code>) واستبدالها بأفعال الاستدامة (<code>swell</code>/<code>surge</code>).</li>
+<li>[ ] تثبيت إعدادات التوليد في سونو (Style Influence: 70%, Weirdness: 20%) مع قفل الصوت المعتمد (Locked Voice).</li>
+</ul>
+  </article>
+</div>
+
+
+<a id="back-top" href="#" title="Back to top" aria-label="Back to top">↑</a>
+
+<script>
+(function () {
+  // ── Reading progress ──────────────────────────────────────
+  const bar = document.getElementById('progress');
+  window.addEventListener('scroll', () => {
+    const h = document.documentElement;
+    const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+    bar.style.width = pct + '%';
+  }, { passive: true });
+
+
+// ── Build TOC from headings ───────────────────────────────
+  const article = document.querySelector('article');
+  const toc     = document.getElementById('toc');
+  const headings = article.querySelectorAll('h1,h2,h3,h4');
+  let idx = 0;
+
+  headings.forEach(h => {
+    if (h.id === 'doc-title') return;
+    if (!h.id) { h.id = 'heading-' + (idx++); }
+    const li  = document.createElement('li');
+    const a   = document.createElement('a');
+    a.href    = '#' + h.id;
+    a.textContent = h.textContent;
+    a.className   = 'toc-' + h.tagName.toLowerCase();
+    
+    // Add native tooltip only if the text is truncated
+    a.addEventListener('mouseenter', function() {
+      if (this.scrollWidth > this.clientWidth) {
+        this.title = this.textContent;
+      } else {
+        this.removeAttribute('title');
+      }
+    });
+
+    li.appendChild(a);
+    toc.appendChild(li);
+  });
+
+  // ── Active TOC highlight on scroll ───────────────────────
+  const tocLinks = toc.querySelectorAll('a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      const link = toc.querySelector('a[href="#' + e.target.id + '"]');
+      if (link) link.classList.toggle('active', e.isIntersecting);
+    });
+  }, { rootMargin: '-10% 0px -80% 0px' });
+  headings.forEach(h => { if (h.id !== 'doc-title') observer.observe(h); });
+
+  // ── Back-to-top visibility ────────────────────────────────
+  const btt = document.getElementById('back-top');
+  window.addEventListener('scroll', () => {
+    btt.classList.toggle('visible', window.scrollY > 300);
+  }, { passive: true });
+  btt.addEventListener('click', e => {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // ── Sidebar toggle (mobile) ───────────────────────────────
+  document.getElementById('sidebar-toggle').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+  });
+
+  // ── Sidebar collapse (desktop) ────────────────────────────
+  const collapseBtn = document.getElementById('sidebar-collapse-btn');
+  if (collapseBtn) {
+    collapseBtn.addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    });
+  }
+
+// ── Copy buttons on code blocks & prose blocks ────────────
+  document.querySelectorAll('.codehilite, pre:not(.codehilite pre)').forEach(block => {
+    const btn  = document.createElement('button');
+    btn.className   = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.setAttribute('aria-label', 'Copy text');
+    block.style.position = 'relative';
+    block.prepend(btn);
+    
+    btn.addEventListener('click', () => {
+      // Find the actual pre element (it might be the block itself, or inside it)
+      const pre = block.tagName === 'PRE' ? block : block.querySelector('pre');
+      if (!pre) return;
+      
+      // Clone the node so we can remove the button from the copied text
+      const clone = pre.cloneNode(true);
+      const btnInClone = clone.querySelector('.copy-btn');
+      if (btnInClone) btnInClone.remove();
+      
+      navigator.clipboard.writeText(clone.innerText).then(() => {
+        btn.textContent = '✓ Copied';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+      });
+    });
+  });
+
+  
+  // ── Wrap tables for horizontal scroll ────────────────────
+  document.querySelectorAll('article table').forEach(t => {
+    const w = document.createElement('div');
+    w.className = 'table-wrap';
+    t.parentNode.insertBefore(w, t);
+    w.appendChild(t);
+  });
+
+  // ── Doc meta (word count + read time) ────────────────────
+  const words = article.innerText.trim().split(/\s+/).length;
+  const mins  = Math.max(1, Math.round(words / 200));
+  const meta  = document.getElementById('doc-meta');
+  if (meta) meta.textContent = words.toLocaleString() + ' words · ' + mins + ' min read';
+})();
+</script>
+
+</body>
+</html>

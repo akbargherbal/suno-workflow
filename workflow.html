@@ -79,6 +79,15 @@
       z-index: 100;
       scrollbar-width: thin;
       scrollbar-color: var(--border) transparent;
+      transition: width 0.25s ease, padding 0.25s ease;
+    }
+
+    #sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
     }
 
     #sidebar-title {
@@ -87,7 +96,40 @@
       letter-spacing: 0.15em;
       text-transform: uppercase;
       color: var(--accent);
-      margin-bottom: 1rem;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    #sidebar-collapse-btn {
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.85rem;
+      line-height: 1;
+      transition: color 0.15s, border-color 0.15s, transform 0.25s ease;
+    }
+    #sidebar-collapse-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* ── Collapsed sidebar state ───────────────────────────── */
+    #sidebar.collapsed {
+      width: 56px;
+      padding: 2rem 0.85rem;
+      overflow: hidden;
+    }
+    #sidebar.collapsed #sidebar-header { justify-content: center; }
+    #sidebar.collapsed #sidebar-title,
+    #sidebar.collapsed #toc { display: none; }
+    #sidebar.collapsed #sidebar-collapse-btn { transform: rotate(180deg); }
+    #sidebar.collapsed ~ #main {
+      margin-left: 56px !important;
     }
 
     #toc { list-style: none; }
@@ -119,6 +161,7 @@
       display: flex;
       justify-content: center;
       padding: 4rem var(--gap) 6rem;
+      transition: margin 0.25s ease;
     }
 
     article {
@@ -451,8 +494,14 @@
     @media (max-width: 820px) {
       #sidebar { transform: translateX(-100%); transition: transform 0.25s; }
       #sidebar.open { transform: translateX(0); }
+      #sidebar.collapsed { width: var(--sidebar-w); padding: 2rem 1.25rem; }
+      #sidebar.collapsed #sidebar-title,
+      #sidebar.collapsed #toc { display: block; }
+      #sidebar.collapsed #sidebar-collapse-btn { transform: none; }
+      #sidebar.collapsed ~ #main { margin-left: 0 !important; }
       #main { margin-left: 0 !important; }
       #sidebar-toggle { display: block; }
+      #sidebar-collapse-btn { display: none; }
     }
 
     /* ── Pygments injected ─────────────────────────────────── */
@@ -551,7 +600,10 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 
 <!-- Sidebar -->
 <nav id="sidebar" aria-label="Table of contents">
-  <div id="sidebar-title">Contents</div>
+  <div id="sidebar-header">
+    <div id="sidebar-title">Contents</div>
+    <button id="sidebar-collapse-btn" aria-label="Collapse sidebar" title="Collapse sidebar">◂</button>
+  </div>
   <ul id="toc"></ul>
 </nav>
 
@@ -566,15 +618,17 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
     </header>
 
     <h1 id="workflowmd-long-classical-arabic-poems-suno-fusion-songs">WORKFLOW.md — Long Classical Arabic Poems → Suno Fusion Songs</h1>
-<p>A general, reusable process for turning any long classical Arabic poem (qasida, mu&rsquo;allaqa, etc.) into a coherent multi-part Suno production. This consolidates the full method developed across the Nabigha and al-Harith projects — apply it to any new poem from scratch.</p>
+<p>A general, reusable process for turning any long classical Arabic poem (qasida, mu&rsquo;allaqa, etc.) into a coherent multi-part Suno production. This consolidates the full method developed across the Nabigha and al-Harith projects, and has since been carried through and revised on the Antara and Amr ibn Kulthum projects — apply it to any new poem from scratch.</p>
 <hr>
 <blockquote>
 <p><strong>⚠️ Note to the model — this file is background, not a binding text:</strong><br>
 This file documents the user&rsquo;s <em>prior</em> methodology so any new session gets quick context — it is not a fixed, final set of rules. The user has noticed more than once that I stick to this file&rsquo;s content literally even when they give direct instructions in the same conversation that contradict it, and that&rsquo;s wrong.<br>
-<strong>The rule:</strong> if the user&rsquo;s live instructions in the current conversation conflict with a point in this file:<br>
-1. Flag it explicitly — cite the conflicting section exactly (its number/heading and its wording or an accurate summary).<br>
-2. Ask: would they rather update the file first so it stays consistent with the new decision, or apply the new instructions this one time without editing the file?<br>
-3. Don&rsquo;t silently defer to this file&rsquo;s content over the user&rsquo;s live instructions — especially on tagging, which the user has stated is still an active, ongoing experiment.</p>
+<strong>The rule:</strong> if the user&rsquo;s live instructions in the current conversation conflict with a point in this file:</p>
+<ol>
+<li>Flag it explicitly — cite the conflicting section exactly (its number/heading and its wording or an accurate summary).</li>
+<li>Ask: would they rather update the file first so it stays consistent with the new decision, or apply the new instructions this one time without editing the file?</li>
+<li>Don&rsquo;t silently defer to this file&rsquo;s content over the user&rsquo;s live instructions — especially on tagging, which the user has stated is still an active, ongoing experiment.</li>
+</ol>
 </blockquote>
 <hr>
 <h2 id="phase-0-source-the-text">Phase 0 — Source the Text</h2>
@@ -595,8 +649,7 @@ This file documents the user&rsquo;s <em>prior</em> methodology so any new sessi
 <span class="w">      </span><span class="nt">&quot;section_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
 <span class="w">      </span><span class="nt">&quot;maqam&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Hijaz&quot;</span><span class="p">,</span>
 <span class="w">      </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;الوداع والخطوات الوادعة&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;lyrics&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;///***///\n[Intro | single clean guitar | close-mic&#39;d, plate reverb, short decay]\n...&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;mood&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;melancholic, longing, nostalgic&quot;</span>
+<span class="w">      </span><span class="nt">&quot;lyrics&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;///***///\n[Intro | single clean guitar | close-mic&#39;d, plate reverb, short decay]\n...&quot;</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">]</span>
 <span class="p">}</span>
@@ -607,7 +660,7 @@ This file documents the user&rsquo;s <em>prior</em> methodology so any new sessi
 <li><code>maqam</code>: from the fixed set only — Hijaz, Nahawand, Ajam, Kurd (Phase 2).</li>
 <li><code>title</code>: Arabic section title, from the Phase 1 section map.</li>
 <li><code>lyrics</code>: the full lyrics-box content as a single string, per the Phase 5 template.</li>
-<li><code>mood</code>: English only, comma-separated, max 3 tags — matches Phase 1 point 4&rsquo;s section-map column.</li>
+<li><code>mood</code>: 3-4 words that describe the mood of the section consistent with the Maqam e.g. &ldquo;Somber, Dark, Majestic&rdquo;</li>
 </ul>
 <hr>
 <h2 id="phase-1-thematic-segmentation">Phase 1 — Thematic Segmentation</h2>
@@ -616,7 +669,7 @@ This file documents the user&rsquo;s <em>prior</em> methodology so any new sessi
 <li><strong>Identify the poem&rsquo;s classical structure first</strong>: most qasidas move through recognizable movements — nasib/atlal (ruins, longing), rahil/tardiyya (journey, hunt, camel or horse description), madih (praise), fakhr (boasting), i&rsquo;tidhar (apology), hija&rsquo; (satire), or a closing simile/summary. Not every poem has all of these, and the order can vary — read the whole poem first before deciding.</li>
 <li><strong>Find the pivot verses (takhallus)</strong> — the lines where the poet visibly shifts subject (e.g. &ldquo;so leave what you see, since there&rsquo;s no going back to it&rdquo; type transitions). These are your section boundaries, not arbitrary verse-count cutoffs.</li>
 <li><strong>Target 8–12 verses per section as a soft guideline</strong> (roughly 3–4 minutes of sung material — verse count is a proxy for that duration, not the goal itself), not a rule. A thematically tight unit that&rsquo;s 5 or 6 verses is fine — better to respect a natural boundary than pad a section that doesn&rsquo;t need it. A single continuous narrative (like a hunt scene) can run to 11–13 if splitting it would break the story.</li>
-<li><strong>Write the section map as a table</strong>: section name, verse range, verse count, mood tags (English, max 3 words — this is what lands directly in the output JSON&rsquo;s <code>mood</code> field, so write it in its final form here rather than translating/trimming it later). Keep this table at the top of your project notes — it&rsquo;s the reference point for every phase after this.</li>
+<li><strong>Write the section map as a table</strong>: section name, verse range, verse count, mood tags (English, max 3 words). Keep this table at the top of your project notes — it&rsquo;s the reference point for every phase after this.</li>
 <li><strong>Checkpoint before lyrics engineering.</strong> Once the section map and maqam assignments (this phase + Phase 2) are drafted, present them back as a short brief with 2–3 targeted approval questions (division count, any section you&rsquo;re unsure about, genre framing) before starting Phase 5. Cheaper to fix a section boundary or maqam call here than after lyrics are written.</li>
 </ol>
 <hr>
@@ -664,16 +717,12 @@ This file documents the user&rsquo;s <em>prior</em> methodology so any new sessi
 <td>غموض، رهبة، جدّية/رسمية</td>
 <td>الكرد</td>
 </tr>
-<tr>
-<td>2. <strong>One maqam per section</strong> — don&rsquo;t split a section&rsquo;s maqam mid-way; if a section genuinely needs two moods, that&rsquo;s a sign it should probably be two sections (back to Phase 1).</td>
-<td></td>
-</tr>
-<tr>
-<td>3. Look for a deliberate <strong>arc across the whole poem</strong> — reusing a maqam for sections that share emotional DNA (e.g. the opening lament and the closing personal appeal) creates a musical rhyme scheme across the whole piece, not just the poetic one. Reserve any maqam with a very distinct color for the one moment that&rsquo;s genuinely unique, so it doesn&rsquo;t lose its impact through repetition.</td>
-<td></td>
-</tr>
 </tbody>
 </table>
+<ol start="2">
+<li><strong>One maqam per section</strong> — don&rsquo;t split a section&rsquo;s maqam mid-way; if a section genuinely needs two moods, that&rsquo;s a sign it should probably be two sections (back to Phase 1).</li>
+<li>Look for a deliberate <strong>arc across the whole poem</strong> — reusing a maqam for sections that share emotional DNA (e.g. the opening lament and the closing personal appeal) creates a musical rhyme scheme across the whole piece, not just the poetic one. Reserve any maqam with a very distinct color for the one moment that&rsquo;s genuinely unique, so it doesn&rsquo;t lose its impact through repetition.</li>
+</ol>
 <hr>
 <h2 id="phase-3-buffer-verses-padding">Phase 3 — Buffer Verses &amp; Padding</h2>
 <ol>
@@ -690,9 +739,11 @@ This file documents the user&rsquo;s <em>prior</em> methodology so any new sessi
 <li>From your best early draft (a fast/cheap model tier is fine here), create a <strong>Voice</strong> (locks singer identity precisely) rather than only a general Style Persona — you want the same reciter across all sections, not just a similar vibe.</li>
 <li><strong>Lock Style Influence and Weirdness (or equivalent sliders) at fixed values once, and never change them for the rest of the project.</strong> Only the maqam selection and lyrics content should vary between sections.</li>
 </ol>
-<p><strong>Nabigha project — locked values (as of the v4/v5 session):</strong> Weirdness <strong>20%</strong>, Style Influence <strong>70%</strong>. These replace an earlier default (50%/50%) that was never consciously set — the project had drifted along on Suno&rsquo;s defaults rather than a deliberate lock. Weirdness controls how far Suno explores away from the expected/conventional result (higher = more unexpected elements — extra voices, odd instrumentation, surprising transitions); Style Influence controls how literally Suno treats the style/exclude prompt (higher = treats it as a harder constraint rather than a loose suggestion). Do not change either value without a documented reason and a listening-test comparison.<br>
-3. If you&rsquo;re chasing higher fidelity from a newer model tier on top of an early draft: try <strong>direct generation guided by the locked Voice</strong> rather than a Cover/re-render pass — Cover tends to &ldquo;reinterpret&rdquo; and speed up performances, while a fresh generation guided by a voice reference is more likely to preserve original pacing.<br>
-4. Generate a short test clip (30–60 seconds) per section before committing to a full render, checking specifically for: vocal pacing/stretch, correct pronunciation of the phonetic spelling, and whether the target maqam actually came through.</p>
+<p><strong>Nabigha project — locked values (as of the v4/v5 session):</strong> Weirdness <strong>20%</strong>, Style Influence <strong>70%</strong>. These replace an earlier default (50%/50%) that was never consciously set — the project had drifted along on Suno&rsquo;s defaults rather than a deliberate lock. Weirdness controls how far Suno explores away from the expected/conventional result (higher = more unexpected elements — extra voices, odd instrumentation, surprising transitions); Style Influence controls how literally Suno treats the style/exclude prompt (higher = treats it as a harder constraint rather than a loose suggestion). Do not change either value without a documented reason and a listening-test comparison.</p>
+<ol start="3">
+<li>If you&rsquo;re chasing higher fidelity from a newer model tier on top of an early draft: try <strong>direct generation guided by the locked Voice</strong> rather than a Cover/re-render pass — Cover tends to &ldquo;reinterpret&rdquo; and speed up performances, while a fresh generation guided by a voice reference is more likely to preserve original pacing.</li>
+<li>Generate a short test clip (30–60 seconds) per section before committing to a full render, checking specifically for: vocal pacing/stretch, correct pronunciation of the phonetic spelling, and whether the target maqam actually came through.</li>
+</ol>
 <hr>
 <h2 id="phase-5-lyrics-box-engineering">Phase 5 — Lyrics Box Engineering</h2>
 <p>Applies per section, inside the lyrics box only (style/genre/production prompt stays separate and is a one-time decision, not something you re-derive per section):</p>
@@ -702,20 +753,70 @@ This file documents the user&rsquo;s <em>prior</em> methodology so any new sessi
 </ol>
 <p><strong>Why this specific tag matters more than any other tag in the section:</strong> it&rsquo;s the first thing Suno reads in the lyrics box, so it acts as an anchor/pivot that sets the interpretive frame for everything that follows — get this one tag right and the rest of the section tends to follow its lead; get it wrong and no amount of tagging later recovers it.</p>
 <p><strong>Name the specific technique, not a general adjective.</strong> A generic word like &ldquo;reverb&rdquo; or a performance adjective like &ldquo;commanding&rdquo; carries whatever association is <em>most common</em> for that word in Suno&rsquo;s training data — usually the generic/mainstream one, which is exactly what you&rsquo;re trying to avoid. A precise technical term (<code>plate reverb, short decay</code>, <code>close-mic'd</code>) narrows the space Suno is drawing from and is far less likely to default toward a cavernous, over-sung, or genre-generic result than a vague descriptor pointing at the same idea. This replaced an earlier version of this rule that used &ldquo;crystal clarity with subtle hall reflections&rdquo; — that phrasing worked but was still an adjective-based description; the mic-technique framing is more precise and grounded.</p>
-<p><strong>Don&rsquo;t put a vocal-quality word in the Intro tag.</strong> It&rsquo;s tempting to add one (<code>vocals commanding</code>, etc.) to make the entrance feel stronger, but the Intro tag&rsquo;s job is instrument + space only — a floating vocal descriptor here breaks the section&rsquo;s own <code>[Section | vocal quality | instrumentation]</code> schema (see point 3) and, worse, duplicates work the Verse tag right after it is already doing. Let the confidence of the entrance come from <em>removing the hum</em>, not from adding an adjective.<br>
-3. <strong>Keep every tag inside a single 3-part schema, and keep it to a phrase, not a sentence.</strong> <code>[Verse]</code>/<code>[Chorus]</code>/<code>[Bridge]</code>/<code>[Intro]</code> headers all follow <code>[Section | vocal quality | instrumentation]</code> — vocal quality goes in slot 2 even for the Intro tag&rsquo;s neighbors, never folded into slot 3 alongside the instruments. And every tag, header or mid-verse, should read like a keyword a model pattern-matches against — 2–5 words, one clause, no reasoning or exceptions embedded in it. If you find yourself stacking a cause, an exception, and a result into one tag (<code>X, but only if Y, then Z</code>), that&rsquo;s a sign you&rsquo;re trying to explain your intent rather than just stating it — split it or cut it down to the one word actually doing the work, don&rsquo;t write more.<br>
-4. <strong>Set each section&rsquo;s vocal-quality descriptor once, as an anchor, and don&rsquo;t repeat or intensify it later in the same section.</strong> A tag like <code>forward clear vocals</code> at <code>[Verse 1]</code> establishes the level for the rest of the section — Suno holds it without further prompting. Re-stating it with a reinforcing word (<code>vocals *still* forward</code>, <code>vocals *still* cutting through</code>) is read as a <em>new, additional</em> instruction to push further in that direction, not as &ldquo;keep doing what you were already doing&rdquo; — and across several such re-statements in one section, this compounds into an over-driven, shouty mic level by the section&rsquo;s later verses/chorus. If a later part of the section genuinely needs a <em>different</em> vocal quality (<code>vocals softening</code>, <code>vocals triumphant</code>), that&rsquo;s a real mood change and should be tagged — just don&rsquo;t use a continuity word (&ldquo;still,&rdquo; &ldquo;remains,&rdquo; &ldquo;keeps&rdquo;) to describe an unchanged state; leave it untagged and let the anchor hold.<br>
-5. <strong>Instrument tags at dramatic beats only, not after every hemistich</strong>: don&rsquo;t insert a tag after each sadr and ajuz by default — that over-constrains Suno and it starts to &ldquo;fight&rdquo; the tag placement instead of breathing naturally. Reserve instrument tags (<code>[strings swell]</code>, <code>[guitar chord]</code>, etc.) for the section&rsquo;s actual pivot points: its climax, a turn in meaning, a build into a chorus/refrain, or a transition into/out of a bridge. As a rough guide, 2–3 tags placed deliberately per section is usually enough — let Suno fill in everything else on its own. Pull only from the instrument palette already defined in your genre/instrumentation prompt; never introduce an instrument in the lyrics box that isn&rsquo;t in your style prompt or that&rsquo;s on your Exclude list, it just confuses the model. Vary the specific tags by section mood (soft/sparse for elegy, sharp/urgent for action, grand for praise, restrained for solemn moments) — but sparingly, at the moments that actually earn it.</p>
+<p><strong>Don&rsquo;t put a vocal-quality word in the Intro tag.</strong> It&rsquo;s tempting to add one (<code>vocals commanding</code>, etc.) to make the entrance feel stronger, but the Intro tag&rsquo;s job is instrument + space only — a floating vocal descriptor here breaks the section&rsquo;s own <code>[Section | vocal quality | instrumentation]</code> schema (see point 3) and, worse, duplicates work the Verse tag right after it is already doing. Let the confidence of the entrance come from <em>removing the hum</em>, not from adding an adjective.</p>
+<ol start="3">
+<li><strong>Keep every tag inside a single 3-part schema, and keep it to a phrase, not a sentence.</strong> <code>[Verse]</code>/<code>[Chorus]</code>/<code>[Bridge]</code>/<code>[Intro]</code> headers all follow <code>[Section | vocal quality | instrumentation]</code> — vocal quality goes in slot 2 even for the Intro tag&rsquo;s neighbors, never folded into slot 3 alongside the instruments. And every tag, header or mid-verse, should read like a keyword a model pattern-matches against — 2–5 words, one clause, no reasoning or exceptions embedded in it. If you find yourself stacking a cause, an exception, and a result into one tag (<code>X, but only if Y, then Z</code>), that&rsquo;s a sign you&rsquo;re trying to explain your intent rather than just stating it — split it or cut it down to the one word actually doing the work, don&rsquo;t write more.</li>
+<li><strong>Set each section&rsquo;s vocal-quality descriptor once, as an anchor, and don&rsquo;t repeat or intensify it later in the same section.</strong> A tag like <code>forward clear vocals</code> at <code>[Verse 1]</code> establishes the level for the rest of the section — Suno holds it without further prompting. Re-stating it with a reinforcing word (<code>vocals *still* forward</code>, <code>vocals *still* cutting through</code>) is read as a <em>new, additional</em> instruction to push further in that direction, not as &ldquo;keep doing what you were already doing&rdquo; — and across several such re-statements in one section, this compounds into an over-driven, shouty mic level by the section&rsquo;s later verses/chorus. If a later part of the section genuinely needs a <em>different</em> vocal quality (<code>vocals softening</code>, <code>vocals triumphant</code>), that&rsquo;s a real mood change and should be tagged — just don&rsquo;t use a continuity word (&ldquo;still,&rdquo; &ldquo;remains,&rdquo; &ldquo;keeps&rdquo;) to describe an unchanged state; leave it untagged and let the anchor hold.</li>
+<li><strong>Instrument tags at dramatic beats only, not after every hemistich</strong>: don&rsquo;t insert a tag after each sadr and ajuz by default — that over-constrains Suno and it starts to &ldquo;fight&rdquo; the tag placement instead of breathing naturally. Reserve instrument tags (<code>[strings swell]</code>, <code>[guitar chord]</code>, etc.) for the section&rsquo;s actual pivot points: its climax, a turn in meaning, a build into a chorus/refrain, or a transition into/out of a bridge. As a rough guide, 2–3 tags placed deliberately per section is usually enough — let Suno fill in everything else on its own. Pull only from the instrument palette already defined in your genre/instrumentation prompt; never introduce an instrument in the lyrics box that isn&rsquo;t in your style prompt or that&rsquo;s on your Exclude list, it just confuses the model. Vary the specific tags by section mood (soft/sparse for elegy, sharp/urgent for action, grand for praise, restrained for solemn moments) — but sparingly, at the moments that actually earn it.</li>
+</ol>
 <p><strong>Never use percussive-hit vocabulary in an instrument tag, even if you never name drums.</strong> Words like <code>hit</code>, <code>crash</code>, <code>slam</code>, <code>smash</code> carry a strong drum-kit association in Suno&rsquo;s training data on their own — a tag like <code>[guitars and strings hit together]</code> can still summon a drum crash underneath it, purely from the verb, with no percussion instrument named anywhere in the tag. Use sustain/build vocabulary instead: <code>swell</code>, <code>surge</code>, <code>build</code>, <code>rise</code>, <code>resolve</code>. This is a real, confirmed mechanism, not a precaution — see the Glitches section below.</p>
 <p><strong>At each section&rsquo;s main pivot tag (the one dramatic-beat tag doing the heaviest lifting), name that section&rsquo;s maqam directly inside the tag</strong> — e.g. <code>[guitars &amp; strings swell — Nahawand]</code>. This is a confirmed, tested technique for keeping the vocal performance anchored to the maqam&rsquo;s character at exactly the moment (a big instrumental swell) where Suno is most likely to drift toward a generic Western arrangement — see &ldquo;Suno Gravitational Well&rdquo; in the Glitches section below. Reserve this for the one or two tags per section that are genuinely load-bearing; don&rsquo;t scatter the maqam name across every minor instrument cue, that dilutes it back into noise.</p>
-<p><strong>Vocal tags are the one exception to &ldquo;sparingly&rdquo; — keep these dense and non-negotiable, but anchor rather than repeat (see point 4).</strong> Every <code>[Verse]</code>/<code>[Chorus]</code>/<code>[Bridge]</code> header keeps its vocal-quality descriptor, and vocal centrality/clarity phrasing is never thinned out the way instrument tags are. The instrument-tag reduction above applies only to instrumentation cues sitting between hemistichs — not to vocal delivery tags.<br>
-6. <strong>Tag density calibration — avoid over-correction.</strong> After a full pass of a poem, a common failure mode is over-tagging: so many instrument/mood cues packed into the lyrics box that the listener feels the arrangement is cluttered or fidgety rather than breathing naturally, even when each individual tag follows every rule above. If this happens, split every tag into one of two buckets and cut hard on the second:<br>
+<p><strong>Vocal tags are the one exception to &ldquo;sparingly&rdquo; — keep these dense and non-negotiable, but anchor rather than repeat (see point 4).</strong> Every <code>[Verse]</code>/<code>[Chorus]</code>/<code>[Bridge]</code> header keeps its vocal-quality descriptor, and vocal centrality/clarity phrasing is never thinned out the way instrument tags are. The instrument-tag reduction above applies only to instrumentation cues sitting between hemistichs — not to vocal delivery tags.</p>
+<ol start="6">
+<li><strong>Tag density calibration — avoid over-correction.</strong> After a full pass of a poem, a common failure mode is over-tagging: so many instrument/mood cues packed into the lyrics box that the listener feels the arrangement is cluttered or fidgety rather than breathing naturally, even when each individual tag follows every rule above. If this happens, split every tag into one of two buckets and cut hard on the second:<br>
    - <strong>Functional (never touch):</strong> the Intro tag, each section&rsquo;s vocal-quality anchor (point 4), the Outro buffer, and any tag that IS a structural padding mechanism from Phase 3 (e.g. an instrumental interlude, or a refrain&rsquo;s explicit instrumentation drop-out).<br>
    - <strong>Decorative (cut ruthlessly):</strong> any instrument tag mid-verse that just restates in different words what the section header already said, any adjective added to a <code>[Chorus]</code> tag beyond the bare label, and — see the &ldquo;Gravitational Well&rdquo; glitch note below for the maqam-naming exception — any tag that exists purely to add color rather than to mark an actual pivot.<br>
-   - Target <strong>one instrument tag per genuine dramatic beat, not per verse and never per hemistich</strong> — a section with two real turning points (e.g. a mythic-scale entrance, then a resolution before the outro) can justify two tags; most sections justify exactly one, or none beyond the header itself.<br>
-7. <strong>Melismatic stretch marks</strong>: append <code>...</code> to the end of every ajuz&rsquo;s rhyme word (and 1–2 extra climactic lines per section) to force the AI to hold and stretch the vowel instead of rushing to the next line. This is what preserves the long, breathing vocal delivery.<br>
-8. <strong>Buffer-in/buffer-out</strong>: as set up in Phase 3, open with a soft echo of verse 1 and close with a soft, fading repeat of the section&rsquo;s last verse. Note that with the hum removed from the Intro (point 2 above), the buffer-in is now the repeated first couplet across <code>[Intro]</code> and <code>[Verse 1]</code> rather than a whispered pre-echo — it still gives you two takes of the same line to trim/crossfade against in Phase 7, just delivered at full confidence both times instead of soft-then-strong.<br>
-9. Insert any Phase 3 chorus/refrain/instrumental padding directly into this same structure — it&rsquo;s not a separate note, it&rsquo;s part of the lyrics box content itself.</p>
+   - Target <strong>one instrument tag per genuine dramatic beat, not per verse and never per hemistich</strong> — a section with two real turning points (e.g. a mythic-scale entrance, then a resolution before the outro) can justify two tags; most sections justify exactly one, or none beyond the header itself.</li>
+<li><strong>Melismatic stretch marks</strong>: append <code>...</code> to the end of every ajuz&rsquo;s rhyme word (and 1–2 extra climactic lines per section) to force the AI to hold and stretch the vowel instead of rushing to the next line. This is what preserves the long, breathing vocal delivery.</li>
+<li><strong>Buffer-in/buffer-out</strong>: as set up in Phase 3, open with a soft echo of verse 1 and close with a soft, fading repeat of the section&rsquo;s last verse. Note that with the hum removed from the Intro (point 2 above), the buffer-in is now the repeated first couplet across <code>[Intro]</code> and <code>[Verse 1]</code> rather than a whispered pre-echo — it still gives you two takes of the same line to trim/crossfade against in Phase 7, just delivered at full confidence both times instead of soft-then-strong.</li>
+<li>Insert any Phase 3 chorus/refrain/instrumental padding directly into this same structure — it&rsquo;s not a separate note, it&rsquo;s part of the lyrics box content itself.</li>
+</ol>
+<p><strong>Worked example</strong> (Amr ibn Kulthum, Section 4 — &ldquo;ملحمة الجلاد وكرامة الموت,&rdquo; Maqam Ajam), showing the minimal maqam-naming at the Chorus pivot tag (point 5):</p>
+<div class="codehilite"><pre><span></span><code>///***///
+[Intro | single clean guitar | close-mic&#39;d, plate reverb, short decay]
+نَعُمُّ أُنَاسَنَا وَنَعِفُّ عَنْهُمْ
+وَنَحْمِلُ عَنْهُمُ مَا حَمَّلُونَا...
+
+[Verse 1 | powerful resonant vocals | distorted guitar and steady bass]
+نَعُمُّ أُنَاسَنَا وَنَعِفُّ عَنْهُمْ
+وَنَحْمِلُ عَنْهُمُ مَا حَمَّلُونَا...
+نُطَاعِنُ مَا تَرَاخَى النَّاسُ عَنَّا
+وَنَضْرِبُ بِالسُّيُوفِ إِذَا غُشِينَا...
+بِسُمْرٍ مِنْ قَنَا الْخَطِّيِّ لُدْنٍ
+ذَوَابِلَ أَوْ بِبِيضٍ يَخْتَلِينَا...
+نَشُقُّ بِهَا رُءُوسَ الْقَوْمِ شَقًّا
+وَنُخْلِيهَا الرِّقَابَ فَتَخْتَلِينَا...
+كَأَنَّ جَمَاجِمَ الْأَبْطَالِ فِيهَا
+وُسُوقٌ بِالْأَمَاعِزِ يَرْتَمِينَا...
+
+[Chorus | triumphant soaring vocals | full orchestral swell — Ajam]
+وَإِنَّ الضِّغْنَ بَعْدَ الضِّغْنِ يَبْدُو
+عَلَيْكَ وَيُخْرِجُ الدَّاءَ الدَّفِينَا...
+وَرِثْنَا الْمَجْدَ قَدْ عَلِمَتْ مَعَدٌّ
+نُطَاعِنُ دُونَهُ حَتَّى يَبِينَا...
+وَنَحْنُ إِذَا عِمَادُ الْحَيِّ خَرَّتْ
+عَنِ الْأَحْفَاضِ نَمْنَعُ مَنْ يَلِينَا...
+
+[Verse 2]
+نَجُذُّ رُءُوسَهُمْ فِي غَيْرِ بِرٍّ
+فَمَا يَدْرُونَ مَاذَا يَتَّقُونَا...
+كَأَنَّ سُيُوفَنَا فِينَا وَفِيهِمْ
+مَخَارِيقٌ بِأَيْدِي لَاعِبِينَا...
+كَأَنَّ ثِيَابَنَا مِنَّا وَمِنْهُمْ
+خُضِبْنَ بِأُرْجُوَانٍ أَوْ طُلِينَا...
+إِذَا مَا عَيَّ بِالْإِسْنَافِ حَيٌّ
+مِنَ الْهَوْلِ الْمُشَبَّهِ أَنْ يَكُونَا...
+نَصَبْنَا مِثْلَ رَهْوَةَ ذَاتَ حَدٍّ
+مُحَافَظَةً وَكُنَّا السَّابِقِينَا...
+بِفِتْيَانٍ يَرَوْنَ الْقَتْلَ مَجْدَنْ
+وَشِيبٍ فِي الْحُرُوبِ مُجَرَّبِينَا...
+
+[Outro | fading instrumentation]
+بِفِتْيَانٍ يَرَوْنَ الْقَتْلَ مَجْدَنْ
+وَشِيبٍ فِي الْحُرُوبِ مُجَرَّبِينَا...
+</code></pre></div>
+
+<p>Note the <code>[Outro]</code> tag here (<code>fading instrumentation</code>, no vocal-quality slot) is looser than the strict <code>[Section | vocal quality | instrumentation]</code> schema in point 3 — Antara&rsquo;s outros keep the full schema (<code>[Outro | deep male vocals | clean electric guitar]</code>) instead. Both have shipped in a completed project; which one is the standing rule for new sections hasn&rsquo;t been decided yet, so treat the tighter Antara form as the default until/unless a call is made to loosen it project-wide.</p>
 <hr>
 <h2 id="phase-6-generate-section-by-section">Phase 6 — Generate, Section by Section</h2>
 <ol>
@@ -755,7 +856,16 @@ This file documents the user&rsquo;s <em>prior</em> methodology so any new sessi
 <p><strong>The glitch:</strong> even with a fully-diacritized Arabic text, a correct maqam assignment, and an explicit style prompt, Suno can still drift the vocal performance toward a generic, Western-sounding delivery mid-section — audibly, a listener can tell &ldquo;this sounds like a Western singer decided to sing in Arabic&rdquo; even though the pronunciation itself is technically fine. This is a known, documented Suno behavior (sometimes called a &ldquo;gravity well&rdquo; in the wider Suno-prompting community): the model&rsquo;s training data is heavily weighted toward mainstream pop/rock, and it exerts a pull back toward that default whenever the prompt doesn&rsquo;t actively resist it — especially at points where the arrangement gets denser or more &ldquo;produced.&rdquo;</p>
 <p><strong>Confirmed contributing cause — removing drum cue tags without replacing what they were doing.</strong> An earlier pass of this poem&rsquo;s tags removed all drum-named instrument cues (<code>[drum fill, urgent]</code>, <code>[drum roll, resolving]</code>, <code>[deep drum hit]</code>) for an unrelated reason (see below), replacing them with guitar-only call-and-response tags. This made the drift <em>worse</em>, not better — the original drum+maqam combination had been an unusual/rare pairing in Suno&rsquo;s training distribution, and that rarity was itself part of what kept the model in unfamiliar (i.e. genuinely Arabic/maqam-flavored) territory. The plain guitar call-and-response phrasing that replaced it is common, idiomatic Western rock vocabulary — a <em>more</em> mainstream pairing, not a neutral one — and the drift reappeared.</p>
 <p><strong>The workaround:</strong> name the section&rsquo;s maqam directly inside its main pivot instrument tag, e.g. <code>[guitars &amp; strings swell — Nahawand]</code>. Pairing a named maqam with a Western instrument (distorted guitar, etc.) inside the same tag is itself an unusual/rare combination by Suno&rsquo;s standards, which appears to reproduce the same &ldquo;escape the well&rdquo; effect the original drum pairing had — but tied to modal identity instead of an instrument we were trying to phase out anyway. <strong>Verification status: confirmed by listening test</strong> (Section 1, tested with and without the maqam-naming fix) — the drift was audibly gone with the fix applied. Applied across all six sections&rsquo; main pivot tags in v2 of this pass.</p>
-<p><strong>Status update (v3, active experiment):</strong> in the v3 tag-density pass, the maqam name was removed from every mid-lyrics instrument tag project-wide, relying only on the maqam name already present in the <code>vocals:</code> field of the style prompt. This was a deliberate trade against tag-clutter (see point 6 in Phase 5), not a reversal of the confirmed test above — the risk is real and not yet re-verified without the fix. Community-documented Suno behavior suggests maqams closer to a Western minor scale (Nahawand, used here in Sections 1 and 5) are inherently more prone to drifting toward generic Western rock than maqams with a more distinct, less Western-adjacent color (Hijaz, Ajam) — so if drift reappears, it&rsquo;s most likely to show up there first. <strong>Watch Sections 1 and 5 specifically on the next listening pass; if drift is audible, restore the maqam name to those two sections&rsquo; pivot tags only, not project-wide.</strong></p>
+<p><strong>Status update (v3, reverted):</strong> the v3 tag-density pass tried removing the maqam name from every mid-lyrics instrument tag project-wide, relying only on the maqam name already present in the <code>vocals:</code> field of the style prompt — a deliberate trade against tag-clutter (see point 6 in Phase 5). That&rsquo;s the state the Antara project shipped in, and it has <strong>no maqam name in any pivot tag</strong>.</p>
+<p><strong>Status update (v4, current — reinstated):</strong> the Amr ibn Kulthum project went back to naming the maqam in the section&rsquo;s main pivot tag, minimally — one mention, at the one or two tags per section that are genuinely load-bearing, e.g.:</p>
+<div class="codehilite"><pre><span></span><code>[Chorus | triumphant soaring vocals | full orchestral brass and guitars swell — Ajam]
+</code></pre></div>
+
+<p>and</p>
+<div class="codehilite"><pre><span></span><code>[Chorus | intense emotional vocals | guitars and strings surge — Hijaz]
+</code></pre></div>
+
+<p>This is now the standing rule (see point 5 in Phase 5 above) — not an experiment to re-verify per project. Keep it minimal: name the maqam only inside the section&rsquo;s heaviest-lifting pivot tag, never on every minor instrument cue, and never inside the Intro tag (see point 2&rsquo;s &ldquo;no vocal-quality word in Intro&rdquo; — the same discipline applies to not overloading Intro with the maqam name either; it belongs at the dramatic pivot, not the opening).</p>
 <h3 id="percussive-verb-instrument-tags-summon-drums-even-when-drums-arent-named">Percussive-verb instrument tags summon drums even when drums aren&rsquo;t named</h3>
 <p><strong>The glitch:</strong> an instrument tag using a percussive-hit verb — <code>hit</code>, <code>crash</code>, <code>slam</code>, <code>smash</code> — can cause Suno to bring in a drum hit underneath it, even when the tag names only non-percussion instruments (e.g. <code>[distorted guitars and strings hit together]</code>) and drums appear nowhere in the tag. The verb itself carries a strong drum-kit association in the training data, independent of which instruments are actually named.</p>
 <p><strong>The workaround:</strong> never use <code>hit</code>/<code>crash</code>/<code>slam</code>/<code>smash</code> in an instrument tag. Use sustain/build vocabulary instead — <code>swell</code>, <code>surge</code>, <code>build</code>, <code>rise</code>, <code>resolve</code>. This is separate from and in addition to simply not naming drums directly; both the noun (drums) and certain verbs need to be avoided for a tag to reliably stay percussion-free.</p>
@@ -766,19 +876,25 @@ This file documents the user&rsquo;s <em>prior</em> methodology so any new sessi
 <p><strong>Verification status: confirmed by listening test</strong> (Section 1, Verse 2 → Chorus drift with <code>vocals still forward</code> present vs. removed).</p>
 <h3 id="directionalintensity-adjectives-in-instrument-tag-headers-over-choreograph-the-result">Directional/intensity adjectives in instrument tag headers over-choreograph the result</h3>
 <p><strong>The glitch (user observation, v4, not yet confirmed by a dedicated listening test):</strong> the same escalation mechanism documented above for repeated vocal-quality tags appears to also apply to intensity/directional words placed inside a <em>section header</em> itself — <code>[Verse 2 | vocals commanding | instrumentation intensifying]</code>, <code>[Bridge | vocals softening | instrumentation pulling back]</code>, <code>[Verse 2 | instrumentation swelling slightly]</code>. Suno appears to read these not as a description of the intended mood but as an active instruction to push in that direction, producing an over-driven vocal and/or a busier, louder instrumental arrangement than intended — the musical equivalent of over-specifying a task (naming the exact route and speed) instead of giving a general instruction and trusting the model to fill in the details (&ldquo;go to the store and pick up groceries&rdquo;).</p>
-<p><strong>The workaround (v4):</strong> strip intensity/directional adjectives out of section headers entirely.<br>
-- <strong>Vocals:</strong> state the vocal-quality descriptor once per section (typically <code>[Verse 1]</code>, per the existing anchor rule above). Don&rsquo;t add a new vocal adjective at a later header unless it&rsquo;s a genuinely distinct mood shift, and even then use a single plain word, never a continuity/escalation word (&ldquo;still&rdquo;, &ldquo;further&rdquo;, &ldquo;more&rdquo;).<br>
-- <strong>Instrumentation:</strong> remove intensity/direction words from the header (<code>intensifying</code>, <code>pulling back</code>, <code>slightly</code>, <code>commanding</code> when applied to instruments) altogether. If the section has a genuine pivot moment, describe it with a single plain instrument tag placed <em>mid-line, at the actual beat</em> (<code>[strings swell]</code>, <code>[distorted guitar stab]</code>) — not as an adjective in the section header. Let the header stay bare (<code>[Verse 2]</code>, <code>[Bridge]</code>) and let the lyric content and the one mid-line tag carry the mood; trust Suno to &ldquo;rise to the occasion&rdquo; rather than choreographing every beat.</p>
+<p><strong>The workaround (v4):</strong> strip intensity/directional adjectives out of section headers entirely.</p>
+<ul>
+<li><strong>Vocals:</strong> state the vocal-quality descriptor once per section (typically <code>[Verse 1]</code>, per the existing anchor rule above). Don&rsquo;t add a new vocal adjective at a later header unless it&rsquo;s a genuinely distinct mood shift, and even then use a single plain word, never a continuity/escalation word (&ldquo;still&rdquo;, &ldquo;further&rdquo;, &ldquo;more&rdquo;).</li>
+<li><strong>Instrumentation:</strong> remove intensity/direction words from the header (<code>intensifying</code>, <code>pulling back</code>, <code>slightly</code>, <code>commanding</code> when applied to instruments) altogether. If the section has a genuine pivot moment, describe it with a single plain instrument tag placed <em>mid-line, at the actual beat</em> (<code>[strings swell]</code>, <code>[distorted guitar stab]</code>) — not as an adjective in the section header. Let the header stay bare (<code>[Verse 2]</code>, <code>[Bridge]</code>) and let the lyric content and the one mid-line tag carry the mood; trust Suno to &ldquo;rise to the occasion&rdquo; rather than choreographing every beat.</li>
+</ul>
 <p><strong>Verification status: unconfirmed, applied preventively project-wide.</strong> This extends the confirmed &ldquo;escalating vocal tags&rdquo; mechanism above by analogy; it hasn&rsquo;t been isolated in its own A/B listening test yet. Spot-check on the next generation pass — if sections built this way come back well-paced and not over-driven, promote this from &ldquo;workaround&rdquo; to &ldquo;confirmed rule.&rdquo;</p>
 <p><strong>The glitch:</strong> when a word begins with the root letter ل and takes the definite article (e.g. الليل, اللعن, اللبد), Arabic assimilates the article&rsquo;s lam into the following lam, producing a single geminated/doubled lam sound (shadda). Suno sometimes mispronounces this doubled lam — especially over Western genres/instrumentation — rendering it closer to an American English &ldquo;L&rdquo; sound instead of the correct Arabic geminated lam.</p>
-<p><strong>Important — narrow scope:</strong> this workaround applies <em>only</em> to the specific case of &ldquo;ال&rdquo; (definite article) assimilating into a root-initial ل. It does <strong>not</strong> apply to:<br>
-- Other words that merely start with the letter ل without the definite article attached.<br>
-- The irregular relative pronouns الذي / التي / الذين, etc. — even though these carry a shadda on the lam by convention, they are a different phonetic case and are not currently known to trigger this specific glitch. Don&rsquo;t apply this fix to them without separately confirming they&rsquo;re affected.</p>
-<p><strong>The workaround:</strong> rewrite the affected word using Quranic (Uthmani-style) orthography instead of standard modern spelling:<br>
-- Replace the alef of &ldquo;ال&rdquo; with alef wasla (<code>ٱ</code>, U+0671).<br>
-- Drop the redundant duplicate lam letter — standard spelling writes the article&rsquo;s lam and the root&rsquo;s lam as two separate ل letters plus a shadda; Uthmani style writes only one ل carrying the shadda, since the shadda already encodes the doubling.<br>
-- If there&rsquo;s an internal sukun on the syllable between the doubled lam and the final letter (e.g. a long vowel glide), use the small Quranic sukun mark (<code>ۡ</code>, U+06E1) instead of the standard sukun (<code>ْ</code>, U+0652).<br>
-- Keep the word&rsquo;s actual grammatical case ending (i&rsquo;rab) exactly as it was — don&rsquo;t drop or alter it; this is a pronunciation fix for the lam only, not a resyllabification of the whole word.</p>
+<p><strong>Important — narrow scope:</strong> this workaround applies <em>only</em> to the specific case of &ldquo;ال&rdquo; (definite article) assimilating into a root-initial ل. It does <strong>not</strong> apply to:</p>
+<ul>
+<li>Other words that merely start with the letter ل without the definite article attached.</li>
+<li>The irregular relative pronouns الذي / التي / الذين, etc. — even though these carry a shadda on the lam by convention, they are a different phonetic case and are not currently known to trigger this specific glitch. Don&rsquo;t apply this fix to them without separately confirming they&rsquo;re affected.</li>
+</ul>
+<p><strong>The workaround:</strong> rewrite the affected word using Quranic (Uthmani-style) orthography instead of standard modern spelling:</p>
+<ul>
+<li>Replace the alef of &ldquo;ال&rdquo; with alef wasla (<code>ٱ</code>, U+0671).</li>
+<li>Drop the redundant duplicate lam letter — standard spelling writes the article&rsquo;s lam and the root&rsquo;s lam as two separate ل letters plus a shadda; Uthmani style writes only one ل carrying the shadda, since the shadda already encodes the doubling.</li>
+<li>If there&rsquo;s an internal sukun on the syllable between the doubled lam and the final letter (e.g. a long vowel glide), use the small Quranic sukun mark (<code>ۡ</code>, U+06E1) instead of the standard sukun (<code>ْ</code>, U+0652).</li>
+<li>Keep the word&rsquo;s actual grammatical case ending (i&rsquo;rab) exactly as it was — don&rsquo;t drop or alter it; this is a pronunciation fix for the lam only, not a resyllabification of the whole word.</li>
+</ul>
 <p>Examples: <code>الليل</code> → <code>ٱلَّيۡل</code>, <code>اللعن</code> → <code>ٱلَّعۡن</code>.</p>
 <p><strong>Verification step:</strong> before applying, always confirm which specific occurrences actually mispronounce in practice — not every doubled-lam word necessarily glitches, so don&rsquo;t blanket-apply this across a whole poem without spot-checking generated audio first. Log which words were converted and why, per project, so the fix can be reverted easily if Suno&rsquo;s pronunciation improves.</p>
 <h3 id="the-waw-al-fariqa-in-is-read-as-a-spoken-letter-instead-of-a-silent-orthographic-marker">The waw al-fariqa in &ldquo;عمرو&rdquo; is read as a spoken letter instead of a silent orthographic marker</h3>
@@ -787,9 +903,11 @@ This file documents the user&rsquo;s <em>prior</em> methodology so any new sessi
 <p><strong>Verification status: unconfirmed.</strong> Needs an A/B listening test (with the waw vs. without) before being applied across a whole poem; don&rsquo;t blanket-apply to every occurrence without spot-checking.</p>
 <h3 id="end-of-hemistich-wasl-continuation-is-read-as-waqf-stop-swallowing-the-tanwin">End-of-hemistich wasl (continuation) is read as waqf (stop), swallowing the tanwin</h3>
 <p><strong>The glitch:</strong> when a verse&rsquo;s sadr (first hemistich) ends on a word that should phonetically connect into the ajuz (second hemistich) — e.g. &ldquo;&hellip;بعاجل طَعْنَةٍ&rdquo; continuing into the next hemistich rather than stopping — Suno can instead treat the line break as a pausal position (waqf), dropping the tanwin and rendering the ta marbuta in its pausal form (silent/haa) with an unwanted silence, e.g. &ldquo;طعنه&rdquo; with a stop, instead of the connected &ldquo;طعنتِن&rdquo; the meaning and meter call for. This doesn&rsquo;t happen every time, which suggests it&rsquo;s tied to how the line is formatted in the lyrics box (e.g. the presence of a newline or line break at a point that isn&rsquo;t actually meant as a stop) rather than the tanwin itself.</p>
-<p><strong>The workaround (unverified, two candidate fixes to test):</strong><br>
-1. Where wasl is intended, keep the sadr and ajuz on the same line (no newline between them) rather than splitting them visually in the lyrics box; reserve the line break for genuine waqf points.<br>
-2. If a visual/formatting split is still needed, avoid any pausal punctuation at that point and make sure nothing in the surrounding tags implies a stop.</p>
+<p><strong>The workaround (unverified, two candidate fixes to test):</strong></p>
+<ol>
+<li>Where wasl is intended, keep the sadr and ajuz on the same line (no newline between them) rather than splitting them visually in the lyrics box; reserve the line break for genuine waqf points.</li>
+<li>If a visual/formatting split is still needed, avoid any pausal punctuation at that point and make sure nothing in the surrounding tags implies a stop.</li>
+</ol>
 <p><strong>Verification status: unconfirmed, occurs inconsistently.</strong> Needs a controlled test — hold everything else constant and vary only the line-break/formatting at the hemistich boundary — before promoting either candidate fix to a confirmed rule.</p>
 <hr>
 <h2 id="quick-checklist-per-new-poem">Quick Checklist (per new poem)</h2>
@@ -798,9 +916,10 @@ This file documents the user&rsquo;s <em>prior</em> methodology so any new sessi
 <li>[ ] Thematic section map built (pivot verses identified, not arbitrary cuts)</li>
 <li>[ ] One maqam assigned per section (from the fixed set: Hijaz, Nahawand, Ajam, Kurd), with a deliberate arc across the whole poem</li>
 <li>[ ] Baseline (longest) section identified; padding planned for shorter ones using their own material</li>
-<li>[ ] Voice locked from a strong early draft; sliders fixed and never touched again — Nabigha project: Weirdness 20%, Style Influence 70% (see Phase 4, point 2)</li>
+<li>[ ] Voice locked from a strong early draft; sliders fixed and never touched again — Nabigha project: Weirdness 20%, Style Influence 70% (see Phase 4, point 2). <em>Not yet confirmed logged for Antara/Amr ibn Kulthum — log the actual values used per project instead of assuming the Nabigha numbers carried over.</em></li>
 <li>[ ] Test clip approved per section before full render</li>
-<li>[ ] Lyrics box follows the standard template: <code>///***///</code> → anchor intro (<code>[Intro | instrument | close-mic'd, plate reverb, short decay]</code>, no hum, no vocal-quality word in this tag) → dense vocal-quality tags set <strong>once per mood</strong> on section headers (anchor, don&rsquo;t repeat/intensify) + sparse instrument tags (palette-only, <strong>one per genuine dramatic beat</strong>, at pivot moments only, sustain/build verbs not percussive-hit verbs, no tag that just restates the section header) → maqam name currently omitted from mid-lyrics tags project-wide (v3 active experiment — see Gravitational Well glitch note; watch Nahawand sections first) → melismatic <code>...</code> → buffer-in/out → any padding</li>
+<li>[ ] Lyrics box follows the standard template: <code>///***///</code> → anchor intro (<code>[Intro | instrument | close-mic'd, plate reverb, short decay]</code>, no hum, no vocal-quality word in this tag) → dense vocal-quality tags set <strong>once per mood</strong> on section headers (anchor, don&rsquo;t repeat/intensify) + sparse instrument tags (palette-only, <strong>one per genuine dramatic beat</strong>, at pivot moments only, sustain/build verbs not percussive-hit verbs, no tag that just restates the section header) → maqam named once, minimally, inside the section&rsquo;s main pivot tag only (e.g. <code>— Ajam</code>) — standing rule as of v4, see Gravitational Well glitch note → melismatic <code>...</code> → buffer-in/out → any padding</li>
+<li>[ ] No <code>mood</code> field anywhere in the output — dropped from the schema and from the style prompt as of the Antara project (see Output Schema note)</li>
 <li>[ ] Every tag checked against the 3-part schema (<code>Section | vocal quality | instrumentation</code>) and kept to a short phrase, not a sentence — no stacked clauses, no embedded reasoning</li>
 <li>[ ] No intensity/directional adjectives (<code>intensifying</code>, <code>pulling back</code>, <code>slightly</code>, <code>commanding</code>, <code>softening</code> applied to instruments) sitting in a section header — cues, not choreography (v4, unconfirmed — see Glitches section)</li>
 <li>[ ] No <code>hit</code>/<code>crash</code>/<code>slam</code>/<code>smash</code> verbs anywhere in an instrument tag, regardless of which instrument is named</li>
@@ -877,6 +996,14 @@ This file documents the user&rsquo;s <em>prior</em> methodology so any new sessi
   document.getElementById('sidebar-toggle').addEventListener('click', () => {
     document.getElementById('sidebar').classList.toggle('open');
   });
+
+  // ── Sidebar collapse (desktop) ────────────────────────────
+  const collapseBtn = document.getElementById('sidebar-collapse-btn');
+  if (collapseBtn) {
+    collapseBtn.addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    });
+  }
 
 // ── Copy buttons on code blocks & prose blocks ────────────
   document.querySelectorAll('.codehilite, pre:not(.codehilite pre)').forEach(block => {
