@@ -65,6 +65,8 @@ A short poem (e.g. ~15 verses) does not need thematic splitting at all — treat
 
 Do not carry over a specific target duration (e.g. "aim for X minutes") from one project to another — log the actual result per project instead (see Phase 3 worked examples).
 
+**Time-Density & Mix Balance rule:** the gaps between hemistichs are also the practical trigger point for Suno's vocal-forward mix balancing (the model pulling instrumentation down behind dense vocal passages). Compressing dense verses into a short runtime (under ~4 min) removes that breathing space between lines, which can leave instrumentation sitting at the same level as the vocal instead of ducking under it. Treat this as an additional reason — alongside pacing feel — to favor the ~4:15–4:30 min range for dense sections.
+
 ---
 
 ## Phase 2 — Assign a Maqam per Section
@@ -83,6 +85,7 @@ Do not carry over a specific target duration (e.g. "aim for X minutes") from one
    | Mystery, awe, gravity/formality | Kurd |
 
 2. One maqam per section — no mid-section maqam changes. If a section genuinely needs two moods, split it (back to Phase 1).
+   - **Semantic Choking warning (Kurd + battle/destruction scenes):** when Kurd is assigned to battle, destruction, or fire imagery, balance the section's mood tags toward solemn/regal/epic (`Solemn majesty`, `Stately tragic power`) rather than purely violent/dark language — this reduces the risk of the model drifting toward a Black/Doom Metal character that conflicts with the style's `exclude_styles` list.
 3. Build a deliberate arc across the whole poem: reuse a maqam for sections that share emotional DNA (e.g. opening lament and closing appeal). Reserve any maqam with a very distinct color (typically Hijaz) for the one moment that's genuinely unique.
 4. If a section mixes two moods, assign the maqam by numeric majority of verses (e.g. 4 verses of parting + 9 of pride in comrades → Ajam).
 
@@ -127,7 +130,8 @@ Applies per section, inside the lyrics box only (style/genre/production prompt i
 3. Tag schema: every `[Verse]`/`[Chorus]`/`[Bridge]`/`[Intro]` header follows `[Section | vocal quality | instrumentation]` — short phrase, 2–5 words per slot, one clause. Never stack a cause/exception/result into one tag.
 4. **Vocal-quality descriptor: set once, as an anchor, never repeated or intensified in the same section.** State it at `[Verse 1]`/first `[Chorus]`; leave later headers in the same section bare. A reinforcing restatement (`vocals *still* forward`) is read by Suno as a new, additional push in that direction, not continuity — this compounds into an over-driven vocal by the section's later verses. A genuine mood shift later in the section gets a new plain descriptor (`vocals softening`) — never a continuity word ("still", "remains", "keeps").
 5. **Instrument tags: dramatic beats only, 2–3 per section.** Not after every hemistich. Pull only from the instrument palette already in the style prompt; never introduce an instrument in the lyrics box that isn't in the style prompt or is on the Exclude list.
-   - Never use percussive-hit verbs (`hit`, `crash`, `slam`, `smash`) in an instrument tag — even without naming drums, these verbs alone can summon a drum hit. Use sustain/build verbs instead: `swell`, `surge`, `build`, `rise`, `resolve`.
+   - Never use percussive-hit verbs (`hit`, `crash`, `slam`, `smash`) in an instrument tag — even without naming drums, these verbs alone can summon a drum hit. Use sustain/build verbs instead: `swell`, `build`, `rise`, `resolve`. **`surge` is excluded from this list** — it tends to read as a sustained, continuous wall-of-sound push that can crowd out the vocal and add harshness, rather than a single controlled dynamic beat.
+   - **`[Verse 1]` instrumentation:** no explicit distorted/overdriven electric guitar in `[Verse 1]`. Keep Verse 1 to muted/clean/sparse instrumentation (`muted rhythmic guitars`, `sparse bass`, `clean acoustic`) so the vocal sits clearly on top; reserve distorted guitar for `[Chorus]`, and there only as a `swell`.
    - No intensity/directional adjectives in section headers (`intensifying`, `pulling back`, `slightly`, `commanding`, `softening` applied to instruments). If a section has a genuine instrumental pivot, tag it as a single plain mid-line cue (`[strings swell]`) at the actual beat — not as a header adjective.
    - Name the section's maqam directly inside its single main pivot tag only (the one dramatic-beat tag doing the heaviest lifting), e.g. `[guitars & strings swell — Nahawand]`. Do not scatter the maqam name across minor cues.
 6. Tag density: after a full pass, split tags into **functional** (Intro tag, each section's vocal anchor, Outro buffer, any Phase 3 padding mechanism — never touch) and **decorative** (anything restating the header, any adjective on `[Chorus]` beyond the bare label — cut ruthlessly). One instrument tag per genuine dramatic beat; most sections justify one, or none beyond the header.
@@ -148,7 +152,7 @@ Use only if the Chorus repeat (Phase 3) and verse-block splitting (Phase 1, shor
 نَعُمُّ أُنَاسَنَا وَنَعِفُّ عَنْهُمْ
 وَنَحْمِلُ عَنْهُمُ مَا حَمَّلُونَا...
 
-[Verse 1 | powerful resonant vocals | distorted guitar and steady bass]
+[Verse 1 | powerful resonant vocals | muted rhythmic guitars and steady bass]
 نَعُمُّ أُنَاسَنَا وَنَعِفُّ عَنْهُمْ
 وَنَحْمِلُ عَنْهُمُ مَا حَمَّلُونَا...
 نُطَاعِنُ مَا تَرَاخَى النَّاسُ عَنَّا
@@ -183,6 +187,8 @@ Use only if the Chorus repeat (Phase 3) and verse-block splitting (Phase 1, shor
 
 Fix only the broken word/line, keeping voice/groove/arrangement as close as possible to the approved take. Try in this order, most surgical first:
 
+**Exception — vocal masked by instrumentation, or high-frequency sizzle/aliasing in the background:** don't use Cover or Remaster for this specific defect — both tend to reinforce the same colliding frequencies rather than fix them. Instead, edit the section's tags directly (swap loud/distorted instrument cues for `muted`/`swell` variants, reduce dense-verse compression per the Phase 1 Time-Density rule) and go straight to a direct regeneration.
+
 1. **Sample (Beta)**, if available — resamples just the problem phrase.
 2. **Replace Section (built-in editor)** — select the whole affected line/hemistich (minimum span ~10s; single words aren't selectable), not just the broken word. Keep every tag identical to the original generation and reuse the same Voice/Persona.
 3. **Cover mode + high Audio Influence** — load the approved take as Cover source, type corrected lyrics, push Audio Influence to ~90–100 while keeping Weirdness low.
@@ -216,7 +222,7 @@ Stopgaps, not permanent orthography rules — revisit periodically as the model 
 
 ### Percussive-hit verbs in instrument tags summon drums
 
-**Rule:** never use `hit`, `crash`, `slam`, `smash` in an instrument tag, even naming only non-percussion instruments. Use `swell`, `surge`, `build`, `rise`, `resolve` instead.
+**Rule:** never use `hit`, `crash`, `slam`, `smash` in an instrument tag, even naming only non-percussion instruments. Use `swell`, `build`, `rise`, `resolve` instead — `surge` is excluded (see Phase 5) because it tends to read as a sustained, continuous wall-of-sound push that can crowd the vocal, rather than a single controlled beat.
 **Why:** these verbs carry a strong drum-kit association in the training data independent of which instruments are named.
 **Status: partially confirmed** — inferred from the gravity-well pattern, applied preventively; not yet isolated in its own A/B test.
 
@@ -238,6 +244,12 @@ Stopgaps, not permanent orthography rules — revisit periodically as the model 
 **Why:** the waw is a purely orthographic marker with no sound of its own; Suno sometimes reads it as spoken (e.g. "Amro" instead of "Amrin"), dropping the tanwin in the process.
 **Status: unconfirmed** — needs an A/B test (with/without the waw) before blanket application.
 
+### High-Frequency Sizzle & Digital Aliasing
+
+**Rule:** avoid combining continuous aggressive distortion cues (e.g. a `surging distorted guitars`-type tag) with dark/intense moods in high-density lyric sections. Prefer `swells` and `muted guitars` in verses, and give dense sections enough runtime/breathing room (~4:15+ min) per the Phase 1 Time-Density rule.
+**Why:** stacking heavy distortion cues into a compressed timeframe is associated with an audible high-frequency buzzing/sizzling artifact (roughly the 4kHz–8kHz band) that can mask vocal presence.
+**Status: unconfirmed** — based on a small number of listening comparisons, not an isolated controlled A/B test. Treat as a preventive guideline and spot-check before promoting to confirmed.
+
 ### End-of-hemistich wasl read as waqf, swallowing the tanwin
 
 **Rule:** where the sadr should phonetically connect into the ajuz (wasl), keep them on the same line in the lyrics box (no line break between them); reserve line breaks for genuine stop points. If a formatting split is still needed, avoid pausal punctuation and anything in surrounding tags that implies a stop.
@@ -258,7 +270,9 @@ Stopgaps, not permanent orthography rules — revisit periodically as the model 
 - [ ] Lyrics box: `///***///` → anchor Intro (no vocal-quality word, no hum) → vocal-quality anchored once per section (never repeated/escalated) → sparse instrument tags at real pivots only, sustain/build verbs only → maqam named once, at the main pivot tag only → melismatic `...` → buffer-in/out → Outro keeps the full 3-part schema
 - [ ] No `mood` field anywhere in the output JSON
 - [ ] Every tag checked against `[Section | vocal quality | instrumentation]`, kept to a short phrase
-- [ ] No intensity/directional adjectives in section headers; no `hit`/`crash`/`slam`/`smash` in any instrument tag
+- [ ] No intensity/directional adjectives in section headers; no `hit`/`crash`/`slam`/`smash`, and no `surge`, in any instrument tag
+- [ ] `[Verse 1]` instrumentation checked: no explicit distorted/overdriven guitar — muted/clean/sparse only
+- [ ] Dense sections checked for enough breathing room / runtime (~4:15+ min) to support vocal-forward mix balancing
 - [ ] Take log kept for every approved section, with actual settings and duration (not assumed from another project)
 - [ ] Post-generation lyric errors fixed via Phase 6.5's ordered options, not a straight regeneration
 - [ ] Full front-to-back listen for drift before final export
