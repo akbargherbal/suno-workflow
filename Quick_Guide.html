@@ -738,6 +738,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <span class="w">    </span><span class="p">{</span>
 <span class="w">      </span><span class="nt">&quot;section_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
 <span class="w">      </span><span class="nt">&quot;maqam&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Ajam&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;mood&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;heroic, defiant, noble&quot;</span><span class="p">,</span>
 <span class="w">      </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;الوداع والالتحاق بالرفاق الحقيقيين&quot;</span><span class="p">,</span>
 <span class="w">      </span><span class="nt">&quot;lyrics&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;///***///\n[Intro | single clean guitar | close-mic&#39;d, plate reverb, short decay]\nأَقِيمُوا بَنِي أُمِّي صُدُورَ مَطِيِّكُمْ\nفَإِنِّي إِلَى قَوْمٍ سِوَاكُمْ لَأَمْيَلُ...\n\n[Verse 1 | powerful resonant vocals | muted rhythmic guitars and steady bass]\n...&quot;</span>
 <span class="w">    </span><span class="p">}</span>
@@ -745,7 +746,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <span class="p">}</span>
 </code></pre></div>
 
-<p><strong>لا يوجد حقل <code>mood</code> في المخرج النهائي.</strong> المزاج يُستخدم فقط كتصنيف عملي داخل جدول القسم 1 لاختيار المقام (القسم 2) — ولا يُكتب أبداً في ملف JSON.</p>
+<p><strong>حقل <code>mood</code> إلزامي في المخرج النهائي.</strong> يُشتق من تصنيف المزاج في جدول القسم 1 (المستخدم أصلاً لاختيار المقام في القسم 2)، ويُكتب في JSON على شكل tags إنجليزية قصيرة (بحد أقصى 4 كلمات/tags)، مثل: <code>"mood": "heroic, defiant, noble"</code>.</p>
 <hr>
 <h2 id="7">7. توليد برومبتات النمط عبر الأداة</h2>
 <div class="codehilite"><pre><span></span><code>python<span class="w"> </span>maqam_prompt_generator.py<span class="w"> </span>--standard
@@ -767,7 +768,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <li>[ ] بداية كل صندوق كلمات تحتوي على <code>///***///</code> يليه تاغ الـ Intro الميكروفوني الثابت بلا صفة صوت.</li>
 <li>[ ] تاغ الـ Chorus الرئيسي فقط يحمل اسم المقام لكسر جاذبية سونو.</li>
 <li>[ ] وسم Outro يحتفظ بالبنية الثلاثية الكاملة.</li>
-<li>[ ] لا حقل <code>mood</code> في ملف JSON النهائي.</li>
+<li>[ ] حقل <code>mood</code> موجود في كل قسم داخل ملف JSON النهائي، بحد أقصى 4 tags إنجليزية.</li>
 <li>[ ] جميع أعجاز الأبيات تنتهي بـ <code>...</code>.</li>
 <li>[ ] لا أفعال إيقاعية حادة (<code>hit</code>/<code>crash</code>/<code>slam</code>/<code>smash</code>)، ولا <code>surge</code>، في أي وسم آلي — الأفعال المعتمدة حصراً: <code>swell</code>/<code>build</code>/<code>rise</code>/<code>resolve</code>.</li>
 <li>[ ] <code>[Verse 1]</code> خالٍ من جيتارات الدستورشن الصريحة — آلات مكتومة/مفرغة (<code>muted</code>/<code>clean</code>/<code>sparse</code>) فقط؛ الدستورشن محجوز للـ <code>[Chorus]</code> بصيغة <code>swell</code>.</li>

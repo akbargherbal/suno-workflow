@@ -31,6 +31,7 @@ Every project's lyrics deliverable is one JSON file, one object per section:
     {
       "section_id": 1,
       "maqam": "Hijaz",
+      "mood": "longing, wistful, tender",
       "title": "الوداع والخطوات الوادعة",
       "lyrics": "///***///\n[Intro | single clean guitar | close-mic'd, plate reverb, short decay]\n..."
     }
@@ -40,9 +41,9 @@ Every project's lyrics deliverable is one JSON file, one object per section:
 
 - `section_id`: 1-indexed, in poem order.
 - `maqam`: one of the fixed set only — Hijaz, Nahawand, Ajam, Kurd.
+- `mood`: required. Short English tags, max 4, derived from the Phase 1 section-map mood label used to pick the maqam (Phase 2). Example: `"mood": "longing, wistful, tender"`.
 - `title`: Arabic section title, from the Phase 1 section map.
 - `lyrics`: the full lyrics-box content as a single string, per Phase 5.
-- **No `mood` field.** Mood is used only as a working label in the Phase 1 section-map table to help pick a maqam (Phase 2) — it is never written to the output JSON.
 
 ---
 
@@ -268,7 +269,7 @@ Stopgaps, not permanent orthography rules — revisit periodically as the model 
 - [ ] Voice locked from a strong early draft; sliders fixed and never touched again — actual values logged per project, not assumed from a prior project
 - [ ] Test clip approved per section before full render
 - [ ] Lyrics box: `///***///` → anchor Intro (no vocal-quality word, no hum) → vocal-quality anchored once per section (never repeated/escalated) → sparse instrument tags at real pivots only, sustain/build verbs only → maqam named once, at the main pivot tag only → melismatic `...` → buffer-in/out → Outro keeps the full 3-part schema
-- [ ] No `mood` field anywhere in the output JSON
+- [ ] `mood` field present per section in the output JSON, max 4 English tags
 - [ ] Every tag checked against `[Section | vocal quality | instrumentation]`, kept to a short phrase
 - [ ] No intensity/directional adjectives in section headers; no `hit`/`crash`/`slam`/`smash`, and no `surge`, in any instrument tag
 - [ ] `[Verse 1]` instrumentation checked: no explicit distorted/overdriven guitar — muted/clean/sparse only
