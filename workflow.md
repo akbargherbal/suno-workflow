@@ -13,11 +13,10 @@ This is an execution playbook, not a discussion document. Follow it as a sequenc
 
 ## Phase 0 — Source the Text
 
-1. Get the full text, **fully diacritized (mushakkal)**, i'rab endings included. Suno's pronunciation accuracy depends on this more than any prompt trick.
-2. Cross-check against at least two reputable sources (critical print edition, trusted literary database). Pick one authoritative version and use it for the whole project.
-3. Verify verse count and order before splitting into sections — some poems have disputed/additional verses across manuscripts. Decide the version up front.
-4. Store the poem as structured data — one (sadr, ajuz) pair per verse, indexed from 1.
-5. **Fixed creative target — do not re-derive per project:** Western symphonic rock/orchestral instrumentation carrying a deep, melismatic, classically-articulated Fus'ha vocal. The Arabic identity comes from the voice, not the instrumentation. Specific instrument choices live in the generator script and can change; this pairing does not.
+0. **Confirm the source, don't silently assume or auto-search.** Check whether the user has actually provided the full, fully-diacritized (mushakkal) text (as a file, pasted data, or a clear reference already in the project). If it's missing or unclear — often just a forgotten attachment, not a request to skip this step — **ask the user directly**: will they supply/attach the verified text themselves, or do they want the assistant to search for a good public-domain edition? Don't default to web-searching on your own initiative.
+1. **Once the user confirms they're supplying an already-verified, fully-diacritized (mushakkal) text, that's a green light — proceed directly, no further cross-checking.** The user does this verification work themselves (typically checked against multiple sources, 4-5 passes) before handing it over; re-verifying it is redundant effort, not a safeguard. Cross-checking sources / disputed-verse review only applies in the case where the assistant itself sourced the text (i.e. the user opted for a search in step 0) — in that case alone, pick one authoritative version and note it.
+2. Store the poem as structured data — one (sadr, ajuz) pair per verse, indexed from 1.
+3. **Fixed creative target — do not re-derive per project:** Western symphonic rock/orchestral instrumentation carrying a deep, melismatic, classically-articulated Fus'ha vocal. The Arabic identity comes from the voice, not the instrumentation. Specific instrument choices live in the generator script and can change; this pairing does not.
 
 ---
 
@@ -53,7 +52,7 @@ Every project's lyrics deliverable is one JSON file, one object per section:
 2. Find the pivot verses (takhallus) — where the poet visibly shifts subject. These are the section boundaries, not arbitrary verse-count cutoffs.
 3. Target 8–12 verses per section as a soft guideline (~3–4 min sung). A thematically tight 5–6 verse unit is fine; don't pad a section that doesn't need it. A single continuous narrative can run to 11–13 verses if splitting it would break the story.
 4. Write the section map as a table: section name, verse range, verse count, mood tags (English, max 3 words). Keep it at the top of the project notes.
-5. Checkpoint before Phase 5: present the section map + maqam assignments as a short brief with 2–3 targeted approval questions before starting lyrics engineering.
+5. Checkpoint before Phase 5 — **mandatory, never skipped:** compile and present a `baseline.md` file (see "Baseline Checkpoint" below) for user approval. Do not jump straight to JSON/lyrics generation without this file being reviewed and approved first, even when the poem is short or the section/maqam calls seem obvious.
 
 ### Special case — short, single-section poems
 
@@ -89,6 +88,23 @@ Do not carry over a specific target duration (e.g. "aim for X minutes") from one
    - **Semantic Choking warning (Kurd + battle/destruction scenes):** when Kurd is assigned to battle, destruction, or fire imagery, balance the section's mood tags toward solemn/regal/epic (`Solemn majesty`, `Stately tragic power`) rather than purely violent/dark language — this reduces the risk of the model drifting toward a Black/Doom Metal character that conflicts with the style's `exclude_styles` list.
 3. Build a deliberate arc across the whole poem: reuse a maqam for sections that share emotional DNA (e.g. opening lament and closing appeal). Reserve any maqam with a very distinct color (typically Hijaz) for the one moment that's genuinely unique.
 4. If a section mixes two moods, assign the maqam by numeric majority of verses (e.g. 4 verses of parting + 9 of pride in comrades → Ajam).
+
+---
+
+## Baseline Checkpoint (`baseline.md`)
+
+A required stop between Phase 2 and Phase 5. Do not begin lyrics-box engineering (Phase 5) or generate the output JSON until this file exists and has been approved by the user — this holds even for a short poem where the section/maqam calls feel obvious; skipping straight to JSON generation is the failure mode this checkpoint exists to prevent.
+
+Compile a `baseline.md` file containing:
+
+1. **Final section table** (from Phase 1 + Phase 2): section number, verse range, verse count, title, assigned maqam — or, for a short single-section poem (Phase 1 special case), one line describing the sole section and its maqam.
+2. **Phonetic/orthographic fix list**: every word flagged for a Workarounds-section fix (doubled-lam Uthmani rewrite, waw al-fariqa drop, etc. — see "Workarounds / Known Suno Glitches" below) in this project, with its verse location. Log per-occurrence, not as a blanket rule applied silently.
+3. **Watch-list — verses at risk of the wasl-read-as-waqf glitch:** flag every verse whose sadr ends in tanwin (the one necessary, not sufficient, condition observed so far — see "End-of-hemistich wasl read as waqf" below). This is a **notice list, not a correction pass**:
+   - Default: no formatting or wording change is made to these verses up front. They stay on the normal path through Phase 5/6 like any other verse.
+   - Present the list to the user at the baseline checkpoint so they can decide, case by case, whether to pre-emptively adjust a specific verse (context-dependent — e.g. a verse they already suspect will be a dense/climactic section) or leave it as-is and wait for the test clip.
+   - Only escalate to an actual fix (Phase 6.5, surgical, single segment) once the glitch is **confirmed on generated audio** for that verse — never based on the watch-list flag alone. The flag is a reason to listen closely, not a reason to intervene before generation.
+
+Present `baseline.md` to the user and get explicit approval before moving on.
 
 ---
 
@@ -271,17 +287,31 @@ Stopgaps, not permanent orthography rules — revisit periodically as the model 
 
 ### End-of-hemistich wasl read as waqf, swallowing the tanwin
 
-**Rule:** where the sadr should phonetically connect into the ajuz (wasl), keep them on the same line in the lyrics box (no line break between them); reserve line breaks for genuine stop points. If a formatting split is still needed, avoid pausal punctuation and anything in surrounding tags that implies a stop.
-**Why:** Suno can treat a line break as a pausal position, dropping the tanwin and turning the ta marbuta pausal/silent, even where the meaning/meter calls for connection.
-**Status: unconfirmed, occurs inconsistently** — needs a controlled test varying only the line-break at the hemistich boundary before promoting either candidate fix.
+**Nature of the issue: caution/spot-check only, not a formatting rule.** This is intermittent and does **not** track a single fixed grammatical marker, so no blanket formatting fix (e.g. "always merge sadr+ajuz onto one line," or "always applies when the ajuz is a dependent na't/haal clause") should be derived from it. Do not restructure the standard one-line-per-hemistich lyrics-box format because of this — most sadr/ajuz boundaries, including many ending in tanwin, generate correctly.
+
+**Examples — Mu'allaqat Antara ibn Shaddad:**
+- *Safe, no issue observed* (sadr ends in a pronoun/possessive suffix, not tanwin): `وَلَقَدْ حَبَسْتُ بِهَا طَوِيلًا نَاقَتِي` → `تَرْغُو إِلَى سُفْعِ الرَّوَاكِدِ جُثَّمِ`; similarly the `يَا دَارَ عَبْلَةَ`, `دَارٌ لِآنِسَةٍ`, `فَوَقَفْتُ فِيهَا نَاقَتِي`, and `وَتَحُلُّ عَبْلَةُ` verses — a full stop after the sadr here is grammatically fine and Suno handles it correctly.
+- *Confirmed glitch:* `فِيهَا اثْنَتَانِ وَأَرْبَعُونَ حَلُوبَةً` / `سُودًا كَخَافِيَةِ الْغُرَابِ الْأَسْحَمِ` — Suno paused after `حَلُوبَةً`, dropping the tanwin, although `سُودًا` is its direct continuing description.
+- *Also observed, same poem:* `تُمْسِي وَتُصْبِحُ فَوْقَ ظَهْرِ حَشِيَّةٍ` / `وَأَبِيتُ فَوْقَ سَرَاةِ أَدْهَمَ مُلْجَمِ` — glitch occurred here too, even though the ajuz opens with a fully independent new clause (new verb, new subject), not a dependent description. This is why the issue can't be pinned to one grammatical pattern.
+- *Also observed:* `هَلْ تُبْلِغَنِّي دَارَهَا شَدَنِيَّةٌ` / `لُعِنَتْ بِمَحْرُومِ الشَّرَابِ مُصَرَّمِ`.
+- Across the same poem's ~54 verses, this was heard only a handful of times, not on every tanwin-ending sadr — confirming it's occasional, not systematic.
+
+**Existing mitigation:** the `...` melismatic marker at the end of every ajuz (Phase 5) already pushes Suno toward sustain rather than a hard stop, and appears to reduce — though not eliminate — this risk generally.
+
+**If it recurs on a generated take:** treat it as a normal Phase 6.5 fix, not a reason to change the project's formatting rules. Flag the specific sadr/ajuz boundary, correct just that segment, and regenerate — only once the glitch is actually heard, never pre-emptively off the watch-list alone. Log the occurrence (word + verse) alongside the project's other per-occurrence phonetic notes (see `baseline.md`) so a real pattern — if one ever emerges — can be reviewed later, without hardening into a blanket rule prematurely.
+
+**Baseline-stage handling:** every tanwin-ending sadr is flagged on the `baseline.md` watch-list at the checkpoint (see "Baseline Checkpoint" above) purely as a notice — no formatting change by default. The user can choose to pre-adjust a flagged verse up front if context warrants it, but the standing default is: leave it alone, listen on the test clip, and only do a surgical Phase 6.5 fix if the glitch is unambiguously confirmed.
+
+**Status: unconfirmed, intermittent** — a spot-check item during Phase 6 test-clip review (especially for sadr lines ending in tanwin), not a standing formatting rule.
 
 ---
 
 ## Quick Checklist (per new poem)
 
-- [ ] Full, verified, fully-diacritized text sourced and stored as structured data
+- [ ] Full, fully-diacritized text in hand — confirmed with the user whether they're supplying it (verified, proceed directly) or want it searched (never assumed silently, never auto-searched without asking)
 - [ ] Poem length checked: short poem (~15 verses or less) → single section, no thematic split (Phase 1 special case); otherwise → thematic section map built from pivot verses
 - [ ] One maqam per section from the fixed set (Hijaz, Nahawand, Ajam, Kurd), with a deliberate arc
+- [ ] `baseline.md` compiled (section/maqam table + per-occurrence phonetic fix list + tanwin-sadr watch-list) and approved by the user — **never skipped**, even for short/obvious poems — before any lyrics engineering or JSON generation starts
 - [ ] Shared 12–14 sung-unit target set per section; shortfall padded via the section's own strongest couplet as `[Chorus]`
 - [ ] Any section (short poem or short section of a long poem) at risk of feeling rushed: Chorus repeat used as the default breathing tool first; verse-block splitting and Instrumental Interlude/Break kept as optional fallbacks, not routine additions
 - [ ] Voice locked from a strong early draft; sliders fixed and never touched again — actual values logged per project, not assumed from a prior project
@@ -294,4 +324,5 @@ Stopgaps, not permanent orthography rules — revisit periodically as the model 
 - [ ] Dense sections checked for enough breathing room / runtime (~4:15+ min) to support vocal-forward mix balancing
 - [ ] Take log kept for every approved section, with actual settings and duration (not assumed from another project)
 - [ ] Post-generation lyric errors fixed via Phase 6.5's ordered options, not a straight regeneration
+- [ ] Test-clip review includes a spot-check for wasl-read-as-waqf on tanwin-ending sadr lines (intermittent — not a formatting rule; fix via Phase 6.5 if it recurs)
 - [ ] Full front-to-back listen for drift before final export
