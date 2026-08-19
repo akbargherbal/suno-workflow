@@ -108,7 +108,9 @@ A required stop between Phase 2 and Phase 5. Do not begin lyrics-box engineering
 Compile a `baseline.md` file containing:
 
 1. **Final section table** (from Phase 1 + Phase 2): section number, verse range, verse count, title, assigned maqam — or, for a short single-section poem (Phase 1 special case), one line describing the sole section and its maqam.
-2. **Phonetic/orthographic fix list**: every word flagged for a Workarounds-section fix (doubled-lam Uthmani rewrite, waw al-fariqa drop, etc. — see "Workarounds / Known Suno Glitches" below) in this project, with its verse location. Log per-occurrence, not as a blanket rule applied silently.
+2. **Phonetic/orthographic fix list**: every word converted for a Workarounds-section fix in this project, with its verse location — see "Workarounds / Known Suno Glitches" below for the full rules. This list mixes two different kinds of entries and should not treat them the same way:
+   - **Doubled-lam-after-al Uthmani rewrite:** now a standing rule, applied automatically to every matching word without exception. Still logged here, but purely for documentation/traceability — the log is a record of what was converted, not a case-by-case decision point.
+   - **Everything else (waw al-fariqa drop, etc.):** remains a per-occurrence judgment call, applied only after individual review — not a blanket rule applied silently.
 3. **Watch-list — verses at risk of the wasl-read-as-waqf glitch:** flag every verse whose sadr ends in tanwin (the one necessary, not sufficient, condition observed so far — see "End-of-hemistich wasl read as waqf" below). This is a **notice list, not a correction pass**:
    - Default: no formatting or wording change is made to these verses up front. They stay on the normal path through Phase 5/6 like any other verse.
    - Present the list to the user at the baseline checkpoint so they can decide, case by case, whether to pre-emptively adjust a specific verse (context-dependent — e.g. a verse they already suspect will be a dense/climactic section) or leave it as-is and wait for the test clip.
@@ -283,11 +285,11 @@ Stopgaps, not permanent orthography rules — revisit periodically as the model 
 **Why:** Suno reads a reinforcing restatement as an additional push in that direction, not "hold the current level" — this compounds into an over-driven vocal or over-busy arrangement by the section's later verses.
 **Status:** vocal-tag version **confirmed** by listening test. Header intensity-adjective version **unconfirmed**, applied preventively — spot-check before promoting to confirmed.
 
-### Doubled lam from the definite article mispronounced
+### Doubled lam from the definite article — standing Uthmani rewrite
 
-**Rule:** when a word begins with root-letter ل and takes the definite article (الليل, اللعن), rewrite it in Uthmani-style orthography in the lyrics box only (not the reference text): alef wasla (`ٱ`) + single ل carrying the shadda + small Quranic sukun (`ۡ`) if there's an internal sukun. Keep the i'rab ending exactly as it was. Example: `الليل` → `ٱلَّيۡل`.
-**Scope — does not apply to:** other words merely starting with ل without the definite article, or to الذي/التي/الذين (different phonetic case, not confirmed to trigger this).
-**Status: needs per-occurrence spot-check** — not every doubled-lam word necessarily glitches; confirm on generated audio before applying, and log which words were converted so the fix can be reverted later.
+**Rule:** whenever a word carries a shadda-doubled ل immediately preceded by the definite article ال (الليل, اللعن, اللاتي, اللواتي, الذي/التي, and every other word matching this pattern — no exceptions), rewrite it in Uthmani-style orthography in the lyrics box only (not the reference text): alef wasla (`ٱ`) + single ل carrying the shadda + small Quranic sukun (`ۡ`) if there's an internal sukun. Keep the i'rab ending exactly as it was. Example: `الليل` → `ٱلَّيۡل`.
+**Scope:** applies uniformly to every word matching this pattern, explicitly including the relative pronouns (الذي/التي/الذين/اللاتي/اللواتي) — no category is carved out, and no case-by-case judgment call is made about whether a given occurrence "counts" or is "a familiar enough word to leave alone."
+**Status: standing rule, applied unconditionally.** Unlike the other entries in this Workarounds section, this is not confidence-graded and does not require a per-occurrence spot-check or listening confirmation before applying it — it's now a default formatting step applied the same way every time a matching word appears. (This is unrelated to the tanwin/wasl-waqf watch-list entry below, which remains a separate, case-by-case, listen-first item — the two are not to be conflated.)
 
 ### Waw al-fariqa in "عمرو" read as a spoken letter
 
@@ -328,7 +330,7 @@ Stopgaps, not permanent orthography rules — revisit periodically as the model 
 - [ ] No split-word (tadwir) verses left divided across the (sadr, ajuz) pair — each such word attached whole to one hemistich
 - [ ] Poem length checked: short poem (~15 verses or less) → single section, no thematic split (Phase 1 special case); otherwise → thematic section map built from pivot verses
 - [ ] One maqam per section from the fixed set (Hijaz, Nahawand, Ajam, Kurd), with a deliberate arc
-- [ ] `baseline.md` compiled (section/maqam table + per-occurrence phonetic fix list + tanwin-sadr watch-list) and approved by the user — **never skipped**, even for short/obvious poems — before any lyrics engineering or JSON generation starts
+- [ ] `baseline.md` compiled (section/maqam table + phonetic fix list — standing-rule conversions like the doubled-lam Uthmani rewrite logged for documentation, remaining per-occurrence fixes like waw al-fariqa logged as judgment calls — + tanwin-sadr watch-list) and approved by the user — **never skipped**, even for short/obvious poems — before any lyrics engineering or JSON generation starts
 - [ ] Shared 12–14 sung-unit target set per section; shortfall padded via the section's own strongest couplet as `[Chorus]`
 - [ ] Any section (short poem or short section of a long poem) at risk of feeling rushed: Chorus repeat used as the default breathing tool first; verse-block splitting and Instrumental Interlude/Break kept as optional fallbacks, not routine additions
 - [ ] Voice locked from a strong early draft; sliders fixed and never touched again — actual values logged per project, not assumed from a prior project
