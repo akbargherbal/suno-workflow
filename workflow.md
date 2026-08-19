@@ -16,6 +16,16 @@ This is an execution playbook, not a discussion document. Follow it as a sequenc
 0. **Confirm the source, don't silently assume or auto-search.** Check whether the user has actually provided the full, fully-diacritized (mushakkal) text (as a file, pasted data, or a clear reference already in the project). If it's missing or unclear — often just a forgotten attachment, not a request to skip this step — **ask the user directly**: will they supply/attach the verified text themselves, or do they want the assistant to search for a good public-domain edition? Don't default to web-searching on your own initiative.
 1. **Once the user confirms they're supplying an already-verified, fully-diacritized (mushakkal) text, that's a green light — proceed directly, no further cross-checking.** The user does this verification work themselves (typically checked against multiple sources, 4-5 passes) before handing it over; re-verifying it is redundant effort, not a safeguard. Cross-checking sources / disputed-verse review only applies in the case where the assistant itself sourced the text (i.e. the user opted for a search in step 0) — in that case alone, pick one authoritative version and note it.
 2. Store the poem as structured data — one (sadr, ajuz) pair per verse, indexed from 1.
+   - **Split-word verses (tadwir):** the source text sometimes has a genuinely enjambed verse, where one word is split across the sadr/ajuz boundary, e.g.:
+     ```
+     لَعَمْرِي لَقَدْ أَبْكَيْتِنِي يَا حَمَامَةَ الْـ
+     عَقِيقِ وَأَبْكَيْتِ الْعُيُونَ الْبَوَاكِيَا
+     ```
+     When storing the (sadr, ajuz) pair, **attach the whole word to one hemistich — never split it across the pair**:
+     ```
+     لَعَمْرِي لَقَدْ أَبْكَيْتِنِي يَا حَمَامَةَ الْـعقيق
+     وَأَبْكَيْتِ الْعُيُونَ الْبَوَاكِيَا
+     ```
 3. **Fixed creative target — do not re-derive per project:** Western symphonic rock/orchestral instrumentation carrying a deep, melismatic, classically-articulated Fus'ha vocal. The Arabic identity comes from the voice, not the instrumentation. Specific instrument choices live in the generator script and can change; this pairing does not.
 
 ---
@@ -249,6 +259,12 @@ Fix only the broken word/line, keeping voice/groove/arrangement as close as poss
 
 Stopgaps, not permanent orthography rules — revisit periodically as the model improves. Each entry: the rule to apply, why, and its confidence status.
 
+### Split-word verses (tadwir) — not a Suno glitch, a source-text fix
+
+**Rule:** see Phase 0, point 2. A verse whose source text splits one word across the sadr/ajuz boundary must have that word attached whole to one hemistich when stored as the (sadr, ajuz) pair — never split.
+**Why this belongs here as a pointer, not a new glitch entry:** unlike the rest of this section, this isn't a Suno-generation artifact — it's a data-integrity fix applied once at text ingestion (Phase 0), before any lyrics-box engineering or generation happens. Listed here only so it isn't confused with the wasl/waqf entry below, which *is* a generation-time issue.
+**Status:** standing rule, not confidence-graded (it's a formatting correctness fix, not an inferred pattern).
+
 ### Gravitational Well — drift toward generic Western pop-rock
 
 **Rule:** name the section's maqam directly inside its single main pivot instrument tag, e.g. `[guitars & strings swell — Nahawand]`. Reserve this for the one or two genuinely load-bearing tags per section; never inside the Intro tag.
@@ -309,6 +325,7 @@ Stopgaps, not permanent orthography rules — revisit periodically as the model 
 ## Quick Checklist (per new poem)
 
 - [ ] Full, fully-diacritized text in hand — confirmed with the user whether they're supplying it (verified, proceed directly) or want it searched (never assumed silently, never auto-searched without asking)
+- [ ] No split-word (tadwir) verses left divided across the (sadr, ajuz) pair — each such word attached whole to one hemistich
 - [ ] Poem length checked: short poem (~15 verses or less) → single section, no thematic split (Phase 1 special case); otherwise → thematic section map built from pivot verses
 - [ ] One maqam per section from the fixed set (Hijaz, Nahawand, Ajam, Kurd), with a deliberate arc
 - [ ] `baseline.md` compiled (section/maqam table + per-occurrence phonetic fix list + tanwin-sadr watch-list) and approved by the user — **never skipped**, even for short/obvious poems — before any lyrics engineering or JSON generation starts

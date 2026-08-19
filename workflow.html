@@ -631,7 +631,13 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <ol start="0">
 <li><strong>Confirm the source, don&rsquo;t silently assume or auto-search.</strong> Check whether the user has actually provided the full, fully-diacritized (mushakkal) text (as a file, pasted data, or a clear reference already in the project). If it&rsquo;s missing or unclear — often just a forgotten attachment, not a request to skip this step — <strong>ask the user directly</strong>: will they supply/attach the verified text themselves, or do they want the assistant to search for a good public-domain edition? Don&rsquo;t default to web-searching on your own initiative.</li>
 <li><strong>Once the user confirms they&rsquo;re supplying an already-verified, fully-diacritized (mushakkal) text, that&rsquo;s a green light — proceed directly, no further cross-checking.</strong> The user does this verification work themselves (typically checked against multiple sources, 4-5 passes) before handing it over; re-verifying it is redundant effort, not a safeguard. Cross-checking sources / disputed-verse review only applies in the case where the assistant itself sourced the text (i.e. the user opted for a search in step 0) — in that case alone, pick one authoritative version and note it.</li>
-<li>Store the poem as structured data — one (sadr, ajuz) pair per verse, indexed from 1.</li>
+<li>Store the poem as structured data — one (sadr, ajuz) pair per verse, indexed from 1.<br>
+   - <strong>Split-word verses (tadwir):</strong> the source text sometimes has a genuinely enjambed verse, where one word is split across the sadr/ajuz boundary, e.g.:<br>
+<code>لَعَمْرِي لَقَدْ أَبْكَيْتِنِي يَا حَمَامَةَ الْـ
+     عَقِيقِ وَأَبْكَيْتِ الْعُيُونَ الْبَوَاكِيَا</code><br>
+     When storing the (sadr, ajuz) pair, <strong>attach the whole word to one hemistich — never split it across the pair</strong>:<br>
+<code>لَعَمْرِي لَقَدْ أَبْكَيْتِنِي يَا حَمَامَةَ الْـعقيق
+     وَأَبْكَيْتِ الْعُيُونَ الْبَوَاكِيَا</code></li>
 <li><strong>Fixed creative target — do not re-derive per project:</strong> Western symphonic rock/orchestral instrumentation carrying a deep, melismatic, classically-articulated Fus&rsquo;ha vocal. The Arabic identity comes from the voice, not the instrumentation. Specific instrument choices live in the generator script and can change; this pairing does not.</li>
 </ol>
 <hr>
@@ -864,6 +870,10 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <hr>
 <h2 id="workarounds-known-suno-glitches">Workarounds / Known Suno Glitches</h2>
 <p>Stopgaps, not permanent orthography rules — revisit periodically as the model improves. Each entry: the rule to apply, why, and its confidence status.</p>
+<h3 id="split-word-verses-tadwir-not-a-suno-glitch-a-source-text-fix">Split-word verses (tadwir) — not a Suno glitch, a source-text fix</h3>
+<p><strong>Rule:</strong> see Phase 0, point 2. A verse whose source text splits one word across the sadr/ajuz boundary must have that word attached whole to one hemistich when stored as the (sadr, ajuz) pair — never split.<br>
+<strong>Why this belongs here as a pointer, not a new glitch entry:</strong> unlike the rest of this section, this isn&rsquo;t a Suno-generation artifact — it&rsquo;s a data-integrity fix applied once at text ingestion (Phase 0), before any lyrics-box engineering or generation happens. Listed here only so it isn&rsquo;t confused with the wasl/waqf entry below, which <em>is</em> a generation-time issue.<br>
+<strong>Status:</strong> standing rule, not confidence-graded (it&rsquo;s a formatting correctness fix, not an inferred pattern).</p>
 <h3 id="gravitational-well-drift-toward-generic-western-pop-rock">Gravitational Well — drift toward generic Western pop-rock</h3>
 <p><strong>Rule:</strong> name the section&rsquo;s maqam directly inside its single main pivot instrument tag, e.g. <code>[guitars &amp; strings swell — Nahawand]</code>. Reserve this for the one or two genuinely load-bearing tags per section; never inside the Intro tag.<br>
 <strong>Why:</strong> pairing a named maqam with a Western instrument inside one tag is an unusual/rare combination in Suno&rsquo;s training data, which keeps the model in maqam-flavored territory instead of drifting to a generic Western default — this effect gets worse, not better, if drum cues are removed without something else taking their place (an unusual drum+maqam pairing was itself doing this job before).<br>
@@ -904,6 +914,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <h2 id="quick-checklist-per-new-poem">Quick Checklist (per new poem)</h2>
 <ul>
 <li>[ ] Full, fully-diacritized text in hand — confirmed with the user whether they&rsquo;re supplying it (verified, proceed directly) or want it searched (never assumed silently, never auto-searched without asking)</li>
+<li>[ ] No split-word (tadwir) verses left divided across the (sadr, ajuz) pair — each such word attached whole to one hemistich</li>
 <li>[ ] Poem length checked: short poem (~15 verses or less) → single section, no thematic split (Phase 1 special case); otherwise → thematic section map built from pivot verses</li>
 <li>[ ] One maqam per section from the fixed set (Hijaz, Nahawand, Ajam, Kurd), with a deliberate arc</li>
 <li>[ ] <code>baseline.md</code> compiled (section/maqam table + per-occurrence phonetic fix list + tanwin-sadr watch-list) and approved by the user — <strong>never skipped</strong>, even for short/obvious poems — before any lyrics engineering or JSON generation starts</li>
