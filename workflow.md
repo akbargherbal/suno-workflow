@@ -109,7 +109,7 @@ Compile a `baseline.md` file containing:
 
 1. **Final section table** (from Phase 1 + Phase 2): section number, verse range, verse count, title, assigned maqam — or, for a short single-section poem (Phase 1 special case), one line describing the sole section and its maqam.
 2. **Phonetic/orthographic fix list**: every word converted for a Workarounds-section fix in this project, with its verse location — see "Workarounds / Known Suno Glitches" below for the full rules. This list mixes different kinds of entries and should not treat them the same way:
-   - **Doubled-lam-after-al Uthmani rewrite:** now a standing rule, applied automatically to every matching word without exception. Still logged here, but purely for documentation/traceability — the log is a record of what was converted, not a case-by-case decision point.
+   - **Doubled-lam-after-al Uthmani rewrite:** now a standing rule, applied automatically to every matching word without exception — **except the divine name, which keeps the plain alif (see the exception under "Uthmani orthography fixes")**. Still logged here, but purely for documentation/traceability — the log is a record of what was converted, not a case-by-case decision point.
    - **Hidden-mad Uthmani rewrite (e.g. هذا، ذلك، أولئك، لكن):** same status as the doubled-lam rule — a standing rule, applied automatically to every matching word (elided mad not written as a full alif) without exception. Every occurrence in the poem is first collected here for documentation, then written in Uthmani orthography in the lyrics box (Phase 5) by default — no per-occurrence judgment call, no listening confirmation required first. Only if a specific occurrence is later confirmed to glitch on generated audio does it get a local Phase 6.5 fix (spelled as pronounced, e.g. `لاكن`) — this doesn't roll back the standing rule for the rest of the poem.
    - **Everything else (waw al-fariqa drop, etc.):** remains a per-occurrence judgment call, applied only after individual review — not a blanket rule applied silently.
 3. **Watch-list — verses at risk of the wasl-read-as-waqf glitch:** flag every verse whose sadr ends in tanwin (the one necessary, not sufficient, condition observed so far — see "End-of-hemistich wasl read as waqf" below). This is a **notice list, not a correction pass**:
@@ -166,9 +166,25 @@ Applies per section, inside the lyrics box only (style/genre/production prompt i
    - Name the section's maqam directly inside its single main pivot tag only (the one dramatic-beat tag doing the heaviest lifting), e.g. `[guitars & strings swell — Nahawand]`. Do not scatter the maqam name across minor cues.
 6. Tag density: after a full pass, split tags into **functional** (Intro tag, each section's vocal anchor, Outro buffer, any Phase 3 padding mechanism — never touch) and **decorative** (anything restating the header, any adjective on `[Chorus]` beyond the bare label — cut ruthlessly). One instrument tag per genuine dramatic beat; most sections justify one, or none beyond the header.
 7. Melismatic stretch: append `...` to the end of every ajuz's rhyme word (and 1–2 extra climactic lines per section).
+   - **Rhyme-vowel extension (in use in the Harith project, together with rule 7a):** the rhyme word is extended before the `...` so the singer holds the final syllable; `...` alone proved too weak to stretch a hamza rhyme.
+   - **Hamza rhyme (ء) — current rule, provisional (subject to testing):** the rhyme extension is **plain alif + hamza with damma + `و`**, i.e. the pattern `…اءُو...`, e.g. `الثَّوَاءُو...`. **Do not use the alif-madda form (`آءُو`)**: in testing, the model sometimes pronounced the hamza oddly inside the alif-madda. History: four forms were tried on the same word (`الثَّوَاءُ`): A `الثَّوَاءُو...`, B `الثَّوَآءُو...`, C `الثَّوَآءُ...`, D `الثَّوَاؤُو...`. B won an earlier random-sample test, but it later gave negative results intermittently, so the rule reverted to A (used in the first Harith drafts). Still under testing — spot-check hamza-rhyme verses on the test clip.
+   - **Kasra-ending hamza rhyme (user's choice, same style as B, untested):** `…آئِي...`, e.g. `السَّمَآئِي...` (alif-madda + hamza-on-ya with kasra + `ي`) — the Harith poem has one such verse.
+   - **Not yet established:** the matching form for a fatha-ending hamza rhyme, and the extension for non-hamza rhymes — confirm with the user and test before assuming.
+7a. **Line layout — phrase cells (succeeded on khafif; try it elsewhere only if rushing shows up).** Lesson from Mu'allaqat al-Harith (khafif): the meter is short and light, so merging sadr+ajuz onto one line — and even a plain one-line-per-hemistich layout — made the singer rush and under-articulate words. The fix is the opposite of merging: give the singer more pauses, not fewer. After several unsatisfying merge/split trials, writing each bayt as 3–4 short lines ("breath cells"), the way a singer or composer would phrase it, was tested and judged clearly better by the user.
+   - **Trigger / scope:** this is not a blanket rule for all short meters. It is documented as having worked on khafif. If the same rushed, hurried delivery recurs in another meter, try the same layout there (test clip first).
+   - **Cell size:** 2–4 words (up to 5 only when the words are short). Typical bayt = 3 lines (e.g. 3-2-3, 4-1-3); 4 lines for verses of 10+ words, litanies, or a punch-line ending; 5 only as a rare exception.
+   - **Where to cut:** at sense/syntax joints (clause, prepositional phrase, place name, idafa unit, list item). Prefer not to cut a mudaf from its mudaf ilayh or a particle from what it governs. The sadr/ajuz boundary is **not** binding here — the cells replace it. (Phase 0 point 2, attaching split words whole, still applies to the stored (sadr, ajuz) pair.)
+   - **Last line = the rhyme cell:** at least two words, carrying the rhyme-vowel extension + `...` (rule 7).
+   - **Heavy words:** a word with strong articulation or weight (e.g. `بِخَزَازٍ`, "to stare fixedly") may sit alone on its own line as a held hinge between a setup line and its answer line. Use sparingly — roughly five per poem — or the effect is lost.
+   - **Repeated structure** (anaphora, litanies such as `أَمْ عَلَيْنَا…`, `وَلَا… وَلَا…`, `مِنْ… وَمِنْ…`): one cell per repetition, preserving call-and-response.
+   - **Consistency:** the same segmentation wherever a verse recurs (Intro buffer-in, Chorus repeats, Outro buffer-out).
+   - **Scope of the extension:** only the final rhyme word of each bayt is written out extended. Internal words are never extended, even when they are hamza words (e.g. `وَالْبَلَاءُ` in `وَالْبَلَاءُ بَلَاءُو...`).
+   - **Musarra' opening verse** (the sadr also rhymes): the sadr's rhyme word is left plain (`أَسْمَاءُ`) — we want it stretched, but the model is left to do it by itself — followed by `،`.
+   - **Not applied by default:** extra punctuation inside bayts and blank lines between bayts — untested levers, to be tried only on request.
 8. Buffer-in/out: repeat the first couplet across `[Intro]` + `[Verse 1]`; repeat the section's last couplet in `[Outro]`.
 9. **Outro tag — standing format:** `[Outro | vocal quality | instrumentation]`, keeping the full 3-part schema (not a bare `[Outro | instrumentation]`). This is the default for all new sections.
 10. Insert any Phase 3 chorus/refrain/instrumental padding directly into this same lyrics-box structure.
+11. **Divine name spelling:** every form of لفظ الجلالة is written with a plain alif (`اللَّهُ`)، never alef wasla (`ٱللَّهُ`) — an explicit exception to the doubled-lam Uthmani rewrite (see "Uthmani orthography fixes", rule a). Before finalizing, search the output for `ٱللَّ`; any hit is an error (other doubled-lam words in Uthmani form are written `ٱلَّ…` with a single lam, so they never match this search).
 
 ### Optional tool — Instrumental Interlude / Break (not a standing rule)
 
@@ -218,6 +234,23 @@ Use only if the Chorus repeat (Phase 3) and verse-block splitting (Phase 1, shor
 إِنَّ الْحِمَامَيْنِ مِنْ بِيضٍ وَمِنْ سُمُرٍ
 دَلْوَا الْحَيَاتَيْنِ مِنْ مَاءٍ وَمِنْ عُشُبِ...
 ```
+
+### Backing-Vocal Handoffs (parenthesized hemistich heads)
+
+A creative layer on top of the standard lyrics box: backing vocals take the first word or few words of a hemistich, and the lead singer continues straight through with no audible gap, so the two sound like one voice trading lines. It began as a happy accident in an early Imru' al-Qais song (Suno assigned the roles by itself) and is now used deliberately. The mechanism is the same as in that song: the head of the hemistich is set off in parentheses.
+
+**Format**
+- Put the head in parentheses on the same line as the rest of the hemistich: `(لَا تَعْذُلِيهِ) فَإِنَّ الْعَذْلَ يُولِعُهُ`. No new tag, no extra line, and the one-line-per-hemistich layout is untouched. If phrase cells (Phase 5, rule 7a) are in use, the parenthesized head sits at the start of a cell.
+- Head length: one to three words, ending at a natural syntactic joint, so the meaning does not break at the point of handoff.
+- Every other lyrics-box rule keeps applying inside the parentheses (Uthmani rewrites, divine name with plain alif, the `...` at the end of each ajuz).
+
+**Where to use it — the poem decides.** There is no fixed quota or selection formula. Heads that carry a speech act tend to work well because the lead answers them (a plea, command, question, exclamation, oath, wish), and so do places where a contrast between the two voices helps the sense. Choose by reading the poem, verse by verse.
+- Keep it restrained and supportive: the backing vocals accompany the lead, they never compete with it. Overuse is a risk (it may read as repeated pushing, the same logic as the vocal-quality anchor in Phase 5, rule 4); this is a hypothesis, not a measured result.
+- The opening and closing verses (`[Intro]` buffer-in and `[Outro]` buffer-out) are best left to the lead singer alone.
+
+**Style prompt:** the default style includes `backing vocals`, placed right after `call and response` and before the maqam. It is part of the project's fixed style (set once, like the rest of the style prompt), not something varied per section. The style text itself lives in the generator script (see Phase 0, point 3).
+
+**Status:** current default, provisional. It was chosen after listening to a small test batch (four songs, one take each), so keep spot-checking handoffs on test clips, especially how the join between the head and the lead sounds, and refine this section as more poems are tested.
 
 ---
 
@@ -291,7 +324,10 @@ Stopgaps, not permanent orthography rules — revisit periodically as the model 
 Two standing, unconditional sub-rules live under this heading. Both are default formatting steps — not confidence-graded, not case-by-case, not contingent on a prior listening confirmation. (Unrelated to the tanwin/wasl-waqf watch-list entry below, which remains a separate, case-by-case, listen-first item — the two are not to be conflated.)
 
 **a. Doubled lam from the definite article.** Whenever a word carries a shadda-doubled ل immediately preceded by the definite article ال (الليل, اللعن, اللاتي, اللواتي, الذي/التي, and every other word matching this pattern — no exceptions), rewrite it in Uthmani-style orthography in the lyrics box only (not the reference text): alef wasla (`ٱ`) + single ل carrying the shadda + small Quranic sukun (`ۡ`) if there's an internal sukun. Keep the i'rab ending exactly as it was. Example: `الليل` → `ٱلَّيۡل`.
-- **Scope:** applies uniformly to every word matching this pattern, explicitly including the relative pronouns (الذي/التي/الذين/اللاتي/اللواتي) — no category is carved out, and no case-by-case judgment call is made about whether a given occurrence "counts" or is "a familiar enough word to leave alone."
+- **Scope:** applies uniformly to every word matching this pattern, explicitly including the relative pronouns (الذي/التي/الذين/اللاتي/اللواتي) — no category is carved out (**the one and only exception is the divine name, see below**), and no case-by-case judgment call is made about whether a given occurrence "counts" or is "a familiar enough word to leave alone."
+- **Exception — the divine name (لفظ الجلالة), including its prefixed forms:** do **NOT** apply the Uthmani rewrite. Write it with a plain alif (`ا`, U+0627), never alef wasla (`ٱ`, U+0671), with the source diacritics unchanged: `اللَّهَ`، `اللَّهُ`، `اللَّهِ`، `بِاللَّهِ`، `وَاللَّهِ` (and any other prefixed form of the same name, e.g. `فَاللَّهُ`، `تَاللَّهِ`، `يَا اللَّهُ`; `لِلَّهِ` has no alif and is untouched).
+  - **Why:** the Uthmani spelling (`ٱللَّه`) produced worse pronunciation results in generation; the plain-alif forms gave correct results. The doubled-lam pattern otherwise matches the divine name, so this exception must be applied explicitly or the rule above will silently convert it.
+  - **Status: confirmed by listening (Oct 2026).** All other doubled-lam words (الليل، اللعن، اللحز، الذي، التي…) keep the Uthmani rewrite unchanged.
 
 **b. Hidden mad in problem words (e.g. هذا, ذلك, أولئك, لكن — examples, not an exhaustive list).** Any word where the model risks dropping the mad because it's an elided mad rather than a full written alif gets flagged wherever it occurs in the poem. Workflow: collect every occurrence in `baseline.md`'s phonetic fix list first (documentation only, not a decision point — see Baseline Checkpoint above), then write it in Uthmani orthography in the lyrics box by default, automatically. Examples: `هَـٰذَا`, `ذَٰلِكَ`, `أُو۟لَـٰئِكَ`, `لَـٰكِنْ`. If it's not one of these examples, the same pattern (elided/hidden mad) is the test for whether a word belongs in this sub-rule.
 - **If a generated take still glitches on a specific occurrence despite the Uthmani spelling:** fix that one segment locally by spelling it as it's actually pronounced (e.g. `لاكن`) — a normal Phase 6.5 correction. This does not roll back the standing rule for the rest of the poem.
@@ -312,7 +348,7 @@ Two standing, unconditional sub-rules live under this heading. Both are default 
 
 ### End-of-hemistich wasl read as waqf, swallowing the tanwin
 
-**Nature of the issue: caution/spot-check only, not a formatting rule.** This is intermittent and does **not** track a single fixed grammatical marker, so no blanket formatting fix (e.g. "always merge sadr+ajuz onto one line," or "always applies when the ajuz is a dependent na't/haal clause") should be derived from it. Do not restructure the standard one-line-per-hemistich lyrics-box format because of this — most sadr/ajuz boundaries, including many ending in tanwin, generate correctly.
+**Nature of the issue: caution/spot-check only, not a formatting rule.** This is intermittent and does **not** track a single fixed grammatical marker, so no blanket formatting fix (e.g. "always merge sadr+ajuz onto one line," or "always applies when the ajuz is a dependent na't/haal clause") should be derived from it. Do not restructure the lyrics-box layout (standard two-line, or phrase cells per Phase 5, rule 7a) because of this — most sadr/ajuz boundaries, including many ending in tanwin, generate correctly.
 
 **Examples — Mu'allaqat Antara ibn Shaddad:**
 - *Safe, no issue observed* (sadr ends in a pronoun/possessive suffix, not tanwin): `وَلَقَدْ حَبَسْتُ بِهَا طَوِيلًا نَاقَتِي` → `تَرْغُو إِلَى سُفْعِ الرَّوَاكِدِ جُثَّمِ`; similarly the `يَا دَارَ عَبْلَةَ`, `دَارٌ لِآنِسَةٍ`, `فَوَقَفْتُ فِيهَا نَاقَتِي`, and `وَتَحُلُّ عَبْلَةُ` verses — a full stop after the sadr here is grammatically fine and Suno handles it correctly.
@@ -327,7 +363,7 @@ Two standing, unconditional sub-rules live under this heading. Both are default 
 - **Scope:** limited strictly to the section-opening verse — not any other watch-listed verse mid-section. Because this verse recurs at two positions in the lyrics box (as the buffer-in in `[Intro]`, then in full in `[Verse 1]`; see Phase 5, rule 9), **the merge (or manual split) is applied at both positions**, not just one.
 - This is not a blanket formatting rule generalized to every tanwin-ending sadr in the poem; it's an optional tool the user reaches for with specific contextual justification, confined to this one case (section opener) alone.
 - **Additional caution — meter (bahr) affects whether this tool even helps:** how well this tool (merging or manual split) actually works is not guaranteed across all meters — it depends on the bahr:
-  - **Short meters:** this tool can be applied proactively with little hesitation, since the merged line stays relatively short and easy for Suno to track.
+  - **Short meters:** earlier guidance was that this tool can be applied with little hesitation. **Observed on khafif (Harith project): merging sadr+ajuz backfired — the singer rushed.** Prefer the phrase-cell layout (Phase 5, rule 7a) over merging; the "manual split" alternative is in effect what rule 7a formalizes.
   - **Long meters:** be careful — merging a long sadr and a long ajuz onto one line can backfire, producing an overly long line that confuses Suno more than it fixes the original issue. **In this case, the better default is to leave the standard two-line layout as-is and rely on post-generation monitoring only** (a surgical Phase 6.5 fix, only once the glitch is actually confirmed by ear, same as the default elsewhere) — not a proactive merge or manual split.
   - Bottom line: whether to apply this tool at all, versus just monitoring, is the user's call based on the specific meter and verse context — not a single mechanical rule applied indiscriminately.
 
@@ -335,7 +371,7 @@ Two standing, unconditional sub-rules live under this heading. Both are default 
 
 **Baseline-stage handling:** every tanwin-ending sadr is flagged on the `baseline.md` watch-list at the checkpoint (see "Baseline Checkpoint" above) purely as a notice — no formatting change by default. The user can choose to pre-adjust a flagged verse up front if context warrants it, but the standing default is: leave it alone, listen on the test clip, and only do a surgical Phase 6.5 fix if the glitch is unambiguously confirmed.
 
-**Status: unconfirmed, intermittent** — a spot-check item during Phase 6 test-clip review (especially for sadr lines ending in tanwin), not a standing formatting rule.
+**Status: unconfirmed, intermittent** — a spot-check item during Phase 6 test-clip review (especially for sadr lines ending in tanwin), not a standing formatting rule. User observation (Oct 2026): the problem has been fading and is now fairly rare; the model's pronunciation of tanwin still can't be guaranteed, and no rule is set either way.
 
 ---
 
@@ -350,7 +386,9 @@ Two standing, unconditional sub-rules live under this heading. Both are default 
 - [ ] Any section (short poem or short section of a long poem) at risk of feeling rushed: Chorus repeat used as the default breathing tool first; verse-block splitting and Instrumental Interlude/Break kept as optional fallbacks, not routine additions
 - [ ] Voice locked from a strong early draft; sliders fixed and never touched again — actual values logged per project, not assumed from a prior project
 - [ ] Test clip approved per section before full render
-- [ ] Lyrics box: `///***///` → anchor Intro (no vocal-quality word, no hum) → vocal-quality anchored once per section (never repeated/escalated) → sparse instrument tags at real pivots only, sustain/build verbs only → maqam named once, at the main pivot tag only → melismatic `...` → buffer-in/out → Outro keeps the full 3-part schema
+- [ ] Lyrics box: `///***///` → anchor Intro (no vocal-quality word, no hum) → vocal-quality anchored once per section (never repeated/escalated) → sparse instrument tags at real pivots only, sustain/build verbs only → maqam named once, at the main pivot tag only → line layout (phrase cells if rushing shows up, rule 7a) → melismatic `...` (with rhyme-vowel extension) → buffer-in/out (same segmentation) → Outro keeps the full 3-part schema
+- [ ] Backing-vocal handoffs: `backing vocals` present in the style prompt; parenthesized hemistich heads placed by the poem's own sense, sparingly and supportive of the lead, with the Intro/Outro verses left to the lead singer
+- [ ] Divine name (لفظ الجلالة) written with plain alif in every form (`اللَّهُ`، `بِاللَّهِ`…), never `ٱللَّه` — exception to the doubled-lam Uthmani rewrite; verified by searching the final JSON
 - [ ] `mood` field present per section in the output JSON, max 4 English tags
 - [ ] Every tag checked against `[Section | vocal quality | instrumentation]`, kept to a short phrase
 - [ ] No intensity/directional adjectives in section headers; no `hit`/`crash`/`slam`/`smash`, and no `surge`, in any instrument tag
@@ -359,4 +397,5 @@ Two standing, unconditional sub-rules live under this heading. Both are default 
 - [ ] Take log kept for every approved section, with actual settings and duration (not assumed from another project)
 - [ ] Post-generation lyric errors fixed via Phase 6.5's ordered options, not a straight regeneration
 - [ ] Test-clip review includes a spot-check for wasl-read-as-waqf on tanwin-ending sadr lines (intermittent — not a formatting rule; fix via Phase 6.5 if it recurs)
+- [ ] Rushed/hurried delivery on a test clip (as heard on khafif)? Try phrase cells (rule 7a) rather than merging hemistichs
 - [ ] Full front-to-back listen for drift before final export

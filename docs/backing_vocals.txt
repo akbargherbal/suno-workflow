@@ -1,0 +1,51 @@
+In modern generative AI music models, an intriguing emergent phenomenon is their ability to intuitively orchestrate complex vocal arrangements without explicit prompting, mirroring the nuanced instincts of seasoned producers. When tasked with classical Arabic poetry like Imru’ al-Qais’s Mu‘allaqah, the algorithm naturally circumvents the rhythmic rigidity of traditional poetic meters by introducing seamless call-and-response dynamics, vocal hand-offs, and layered choral textures. Secondary voices instinctively punctuate the heads of phrases—whether through sustained harmonic swells or resonant vocal punches—before effortlessly passing the melodic line back to the lead singer to resolve. This spontaneous vocal interplay not only enriches the piece with cinematic depth and narrative pacing, but also demonstrates how deeply advanced neural networks have begun to grasp musical phrasing, contrast, and emotional resonance.
+
+---
+
+**(آهْ آهْ آهْ...)**
+
+(وَقِرْبَةِ أَقْوَامٍ) جَعَلْتُ عِصَامَهَا  
+(عَلَى كَاهِلٍ) مِنِّي ذَلُولٍ مُرَحَّلِي  
+
+**(وَقِرْبَةِ أَقْوَامٍ)** جَعَلْتُ عِصَامَهَا  
+(عَلَى كَاهِلٍ) مِنِّي ذَلُولٍ مُرَحَّلِي  
+
+وَوَادٍ كَجَوْفِ الْعَيْرِ قَفْرٍ قَطَعْتُهُ  
+بِهِ الذِّئْبُ يَعْوِي كَالْخَلِيعِ الْمُعَيَّلِي  
+
+فَقُلْتُ لَهُ لَمَّا عَوَى إِنَّ شَأْنَنَا  
+قَلِيلُ الْغِنَى إِنْ كُنْتَ لَمَّا تَمَوَّلِي  
+
+**(كِلَانَــــــــــــــــــا)** إِذَا مَا نَالَ شَيْئًا أَفَاتَهُ  
+**(وَمَنْ يَحْتَرِثْ حَرْثِي)** وَحَرْثَكَ يَهْزَلِي  
+
+**(آهْ آهْ آهْ...)**
+
+وَقَدْ أغْتَدِي والطَّيْرُ فِي وُكُنَاتِهَا **(آهْ)**  
+بِمُنْجَرِدٍ قَيْدِ الأَوَابِدِ هَيْكَلِي **(آهْ)**  
+
+مِكَرٍّ مِفَرٍّ مُقْبِلٍ مُدْبِرٍ مَعًا  
+كَجُلْمُوْدِ صَخْرٍ حَطَّهُ السَّيْلُ مِنْ عَلِي  
+
+(كُمَيْتٍ) يَزِلُّ ٱلِّبْدُ عَنْ حَالِ مَتْنِهِ  
+كَمَا زَلَّتِ الصَّفْوَاءُ بِالْمُتَنَزِّلِي  
+
+(عَلَى الذِّبْلِ جَيَّاشٍ) كأنَّ اهْتِزَامَهُ  
+**(إِذَا جَاشَ فِيْهِ حَمْيُهُ غَلْيُ مِرْجَلِي)**  
+
+مِسَحٍّ إِذَا مَا السَّابِحَاتُ عَلَى الْوَنَى  
+أَثَرْنَ الغُبَارَ بِالْكَدِيْدِ الْمُرَكَّلِي  
+
+**(يَزِلُّ الْغُلاَمُ الْخِفُّ عَنْ صَهَوَاتِهِ)**  
+وَيُلْوِي بِأَثْوَابِ الْعَنِيْفِ الْمُثَقَّلِي **(آهْ آهْ)**  
+
+دَرِيرٍ كَخُذْرُوفِ الْوَلِيْدِ أَمَرَّهُ  
+تَتَابُعُ كَفَّيْهِ بِخَيْطٍ مُوَصَّلِي **(آهْ)**  
+
+(لَهُ أَيْطَلَاْ ظَبْيٍ وَسَاْقَا نَعَامَةٍ)  
+وَإِرْخَاْءُ سِرْحَاْنٍ وَتَقْرِيْبُ تَتْفُلِي  
+
+(لَهُ أَيْطَلَاْ ظَبْيٍ وَسَاْقَا نَعَامَةٍ)  
+وَإِرْخَاْءُ سِرْحَاْنٍ وَتَقْرِيْبُ تَتْفُلِي  
+
+**(آهْ آهْ آهْ آهْ...)**
