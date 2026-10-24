@@ -855,17 +855,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 دَلْوَا الْحَيَاتَيْنِ مِنْ مَاءٍ وَمِنْ عُشُبِ...
 </code></pre></div>
 
-<h3 id="backing-vocal-handoffs-parenthesized-hemistich-heads">Backing-Vocal Handoffs (parenthesized hemistich heads)</h3>
-<p>A creative layer on top of the standard lyrics box: backing vocals take the first word or few words of a hemistich, and the lead singer continues straight through with no audible gap, so the two sound like one voice trading lines. It began as a happy accident in an early Imru&rsquo; al-Qais song (Suno assigned the roles by itself) and is now used deliberately. The mechanism is the same as in that song: the head of the hemistich is set off in parentheses.</p>
-<p><strong>Format</strong><br>
-- Put the head in parentheses on the same line as the rest of the hemistich: <code>(لَا تَعْذُلِيهِ) فَإِنَّ الْعَذْلَ يُولِعُهُ</code>. No new tag, no extra line, and the one-line-per-hemistich layout is untouched. If phrase cells (Phase 5, rule 7a) are in use, the parenthesized head sits at the start of a cell.<br>
-- Head length: one to three words, ending at a natural syntactic joint, so the meaning does not break at the point of handoff.<br>
-- Every other lyrics-box rule keeps applying inside the parentheses (Uthmani rewrites, divine name with plain alif, the <code>...</code> at the end of each ajuz).</p>
-<p><strong>Where to use it — the poem decides.</strong> There is no fixed quota or selection formula. Heads that carry a speech act tend to work well because the lead answers them (a plea, command, question, exclamation, oath, wish), and so do places where a contrast between the two voices helps the sense. Choose by reading the poem, verse by verse.<br>
-- Keep it restrained and supportive: the backing vocals accompany the lead, they never compete with it. Overuse is a risk (it may read as repeated pushing, the same logic as the vocal-quality anchor in Phase 5, rule 4); this is a hypothesis, not a measured result.<br>
-- The opening and closing verses (<code>[Intro]</code> buffer-in and <code>[Outro]</code> buffer-out) are best left to the lead singer alone.</p>
 <p><strong>Style prompt:</strong> the default style includes <code>backing vocals</code>, placed right after <code>call and response</code> and before the maqam. It is part of the project&rsquo;s fixed style (set once, like the rest of the style prompt), not something varied per section. The style text itself lives in the generator script (see Phase 0, point 3).</p>
-<p><strong>Status:</strong> current default, provisional. It was chosen after listening to a small test batch (four songs, one take each), so keep spot-checking handoffs on test clips, especially how the join between the head and the lead sounds, and refine this section as more poems are tested.</p>
 <hr>
 <h2 id="phase-6-generate-section-by-section">Phase 6 — Generate, Section by Section</h2>
 <ol>
@@ -966,7 +956,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <li>[ ] Voice locked from a strong early draft; sliders fixed and never touched again — actual values logged per project, not assumed from a prior project</li>
 <li>[ ] Test clip approved per section before full render</li>
 <li>[ ] Lyrics box: <code>///***///</code> → anchor Intro (no vocal-quality word, no hum) → vocal-quality anchored once per section (never repeated/escalated) → sparse instrument tags at real pivots only, sustain/build verbs only → maqam named once, at the main pivot tag only → line layout (phrase cells if rushing shows up, rule 7a) → melismatic <code>...</code> (with rhyme-vowel extension) → buffer-in/out (same segmentation) → Outro keeps the full 3-part schema</li>
-<li>[ ] Backing-vocal handoffs: <code>backing vocals</code> present in the style prompt; parenthesized hemistich heads placed by the poem&rsquo;s own sense, sparingly and supportive of the lead, with the Intro/Outro verses left to the lead singer</li>
+<li>[ ] Style prompt: <code>backing vocals</code> kept in the default style, placed right after <code>call and response</code> and before the maqam</li>
 <li>[ ] Divine name (لفظ الجلالة) written with plain alif in every form (<code>اللَّهُ</code>، <code>بِاللَّهِ</code>…), never <code>ٱللَّه</code> — exception to the doubled-lam Uthmani rewrite; verified by searching the final JSON</li>
 <li>[ ] <code>mood</code> field present per section in the output JSON, max 4 English tags</li>
 <li>[ ] Every tag checked against <code>[Section | vocal quality | instrumentation]</code>, kept to a short phrase</li>
