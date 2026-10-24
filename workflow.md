@@ -235,36 +235,7 @@ Use only if the Chorus repeat (Phase 3) and verse-block splitting (Phase 1, shor
 دَلْوَا الْحَيَاتَيْنِ مِنْ مَاءٍ وَمِنْ عُشُبِ...
 ```
 
-### Backing-Vocal Handoffs (parenthesized segments)
-
-A creative layer on top of the standard lyrics box: backing vocals take part of a hemistich, and the lead singer continues straight through with no audible gap, so the two sound like one voice trading lines. It began as a happy accident in an early Imru' al-Qais song (Suno assigned the roles by itself) and is now used deliberately. The mechanism is the same as in that song: the segment given to the backing vocals is set off in parentheses. Everything below is a default and a set of examples drawn from the Ibn Zuraiq project, not a binding rule; the poem and the user decide.
-
-**Format**
-- Put the segment in parentheses on the same line as the rest of the hemistich. No new tag, no extra line, and the one-line-per-hemistich layout is untouched. If phrase cells (Phase 5, rule 7a) are in use, the parenthesized segment sits inside a cell, or forms one.
-- **Placements in use:** the *beginning* of a hemistich, the *end* of a hemistich (in practice the end of the sadr), or the *whole* hemistich. All three are equally valid; none is the default.
-  - Beginning: `(لَا أَكْذِبُ اللَّهَ) ثَوْبُ الصَّبْرِ مُنْخَرِقٌ عَنِّي`
-  - End of the sadr, the lead then continues into the ajuz: `يَكْفِيهِ مِنْ لَوْعَةِ التَّشْتِيتِ (أَنَّ لَهُ)`
-  - Whole sadr, the lead answers with the ajuz: `(هَلِ الزَّمَانُ مُعِيدٌ فِيكَ لَذَّتَنَا)`
-- **The middle of a hemistich is deliberately avoided in the current project** (user's direction). It is untested, not forbidden.
-- Segment length: typically one to three words for a beginning or end, and the full hemistich when the whole sadr or ajuz is the segment, bounded by natural syntactic joints so the meaning does not break at the point of handoff. A guideline, not a limit.
-- Every other lyrics-box rule keeps applying inside the parentheses (Uthmani rewrites, divine name with plain alif, the `...` at the end of each ajuz when the ajuz is included).
-
-**Where to use it: the poem decides.** There is no fixed quota, selection formula, or fixed slot. Read the poem verse by verse and ask what role the backing voice would play there:
-- *Caller* (beginning): a plea, command, question, exclamation, oath or wish that the lead answers or completes, e.g. `(أَلَا أَقَمْتَ) فَكَانَ الرُّشْدُ أَجْمَعُهُ`.
-- *Echo* (end of the sadr): the backing voice picks up the last phrase and the lead carries the thought on, e.g. `وَمَنْ يُصَدِّعُ قَلْبِي ذِكْرُهُ (وَإِذَا جَرَى)`.
-- *Call and response* (whole hemistich): the sadr is the proposition, question or confession and the ajuz is the answer or the saying, which suits the `call and response` already in the style prompt, e.g. the whole sadr `(أُعْطِيتُ مُلْكًا فَلَمْ أُحْسِنْ سِيَاسَتَهُ)` answered by the lead's `وَكُلُّ مَنْ لَا يَسُوسُ الْمُلْكَ يُخْلَعُهُ...`.
-- *Two voices* where the verse itself has two parties or two sides (`(وَأَدْمُعِي مُسْتَهِلَّاتٌ) وَأَدْمُعُهُ...`).
-
-**Defaults used so far (project choices, open to change per poem)**
-- Keep it restrained and supportive: the backing vocals accompany the lead, they never compete with it. Overuse is a risk (it may read as repeated pushing, the same logic as the vocal-quality anchor in Phase 5, rule 4); this is a hypothesis, not a measured result. In Ibn Zuraiq: 4 / 4 / 2 / 5 segments in the four sections, with the Kurd section (S3) kept lightest.
-- Leave `[Intro]` and `[Outro]` to the lead singer alone, and in practice also the first and last verse of the section, since those recur at two positions and should stay identical for the Phase 7 crossfade.
-- Do not place segments in adjacent verses.
-- A repeated `[Chorus]` is repeated verbatim, so a segment inside it appears at the same place in every repeat.
-- The lead keeps the ajuz's rhyme word and its `...` stretch (Phase 5, rule 7) in nearly every case, so the rhyme extension is not handed to a backing voice. Putting the end of an ajuz in parentheses is an untested experiment; if tried, keep the whole rhyme word, its extension and the `...` inside the parentheses together.
-
 **Style prompt:** the default style includes `backing vocals`, placed right after `call and response` and before the maqam. It is part of the project's fixed style (set once, like the rest of the style prompt), not something varied per section. The style text itself lives in the generator script (see Phase 0, point 3).
-
-**Status:** current default, provisional, and deliberately flexible. The beginning placement was first tried on a small test batch (four songs, one take each); the end-of-sadr and whole-hemistich placements arrive with the Ibn Zuraiq project and are as yet unheard. Keep spot-checking on test clips: how the join between the parenthesized segment and the lead sounds, whether a segment that ends in tanwin (e.g. `مُسْتَهِلَّاتٌ` in Ibn Zuraiq S2) is delivered or swallowed at the handoff (see the wasl/waqf entry under Workarounds), and whether whole-hemistich segments keep the lead's answer clearly in front. Refine this section as more poems and placements are tested.
 
 ---
 
@@ -401,7 +372,7 @@ Two standing, unconditional sub-rules live under this heading. Both are default 
 - [ ] Voice locked from a strong early draft; sliders fixed and never touched again — actual values logged per project, not assumed from a prior project
 - [ ] Test clip approved per section before full render
 - [ ] Lyrics box: `///***///` → anchor Intro (no vocal-quality word, no hum) → vocal-quality anchored once per section (never repeated/escalated) → sparse instrument tags at real pivots only, sustain/build verbs only → maqam named once, at the main pivot tag only → line layout (phrase cells if rushing shows up, rule 7a) → melismatic `...` (with rhyme-vowel extension) → buffer-in/out (same segmentation) → Outro keeps the full 3-part schema
-- [ ] Backing-vocal handoffs: `backing vocals` present in the style prompt; parenthesized segments (beginning, end of sadr, or whole hemistich; middle avoided; none is a fixed slot) placed by the poem's own sense, sparingly and supportive of the lead, with the Intro/Outro verses left to the lead singer
+- [ ] Style prompt: `backing vocals` kept in the default style, placed right after `call and response` and before the maqam
 - [ ] Divine name (لفظ الجلالة) written with plain alif in every form (`اللَّهُ`، `بِاللَّهِ`…), never `ٱللَّه` — exception to the doubled-lam Uthmani rewrite; verified by searching the final JSON
 - [ ] `mood` field present per section in the output JSON, max 4 English tags
 - [ ] Every tag checked against `[Section | vocal quality | instrumentation]`, kept to a short phrase
