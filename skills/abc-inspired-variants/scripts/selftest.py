@@ -66,6 +66,85 @@ def write(txt):
     f.write(txt); f.close(); return f.name
 
 
+NATIVE = """X:1
+T:
+M:4/4
+L:1/16
+Q:1/4=104
+V: Vocal clef=treble name="Vocal Melody" snm="Vocal"
+V: Ins clef=treble name="Ins Melody" snm="Inst."
+K:Eb
+% intro
+V: Vocal
+Z|
+V: Ins
+Z|
+% verse
+V: Vocal
+"Cm7"z4e2e2e2e4f2-|"Bb7"f2d4c4B4A2-|"Cm"A2z2e2e2e2e4f2-|"Bb7"f2d4c8z2|
+V: Ins
+Z4|
+% chorus
+V: Vocal
+"Eb"e2e2e2e2e4e2B2|"Bb"d2e4e6z4|"Cm"z4e2e2e2e2e2B2|"Ab"d2e4e4z2e2z2|
+V: Ins
+Z4|
+"""
+
+
+def native_tests():
+    """Native-dialect features: chords, sections, accidental scope, lint, strip-chords."""
+    bad = 0
+    def expect(cond, what):
+        nonlocal bad
+        if not cond:
+            bad += 1
+            print("NATIVE FAIL:", what)
+    p = write(NATIVE)
+    P = T.parse_abc(p)
+    expect(len(P["chords"]["Vocal"]) == 8, "chord symbols not collected (expected 8)")
+    expect([s[0] for s in P["sections"]] == ["intro", "verse", "chorus"], f"sections {[s[0] for s in P['sections']]}")
+    expect(not T.check(p), "bar sums on a valid native score")
+    expect(not [m for lv, m in T.lint(p) if lv == "FIX"], "lint rejects a valid native score")
+    # strip-chords: output has no quoted chords, same notes, and the file still passes check
+    q = p + ".nochords.abc"
+    r = subprocess.run([sys.executable, os.path.join(HERE, "abc_tool.py"), "strip-chords", p, q], capture_output=True, text=True)
+    expect(r.returncode == 0 and os.path.exists(q), "strip-chords failed: " + r.stdout + r.stderr)
+    if os.path.exists(q):
+        txt = open(q, encoding="utf-8").read()
+        expect('"Cm' not in txt and '"Bb' not in txt, "chord symbols left in stripped file")
+        expect('name="Vocal Melody"' in txt, "voice names were damaged by strip-chords")
+        a = [(e[1], e[2], e[3]) for e in T.parse_abc(p)["voices"]["Vocal"] if e[0] == "n"]
+        b = [(e[1], e[2], e[3]) for e in T.parse_abc(q)["voices"]["Vocal"] if e[0] == "n"]
+        expect(a == b, "strip-chords changed the melody")
+        os.unlink(q)
+    # a bar that does not add up must be caught
+    broken = NATIVE.replace('"Bb7"f2d4c8z2|', '"Bb7"f2d4c8z4|', 1)
+    pb = write(broken)
+    expect(bool(T.check(pb)), "check missed a bar with the wrong total")
+    # lint: a tuplet is outside the native dialect
+    tup = NATIVE.replace('"Cm"A2z2e2e2e2e4f2-|', '"Cm"(3A2z2e2e2e2e4f2-|', 1)
+    pt = write(tup)
+    expect(any(lv == "FIX" for lv, m in T.lint(pt)), "lint missed a tuplet")
+    # accidental scope: native rule sharpens the same letter in every octave until the barline
+    acc = "X:1\nM:4/4\nL:1/16\nQ:1/4=100\nV: Vocal\nV: Ins\nK:C\nV: Vocal\n^F4f4f4F4|F16|\nV: Ins\nZ2|\n"
+    pa = write(acc)
+    old = T.ACC_MODE
+    try:
+        T.ACC_MODE = "native"
+        nat = [e[3] for e in T.parse_abc(pa)["voices"]["Vocal"] if e[0] == "n"]
+        T.ACC_MODE = "abc"
+        std = [e[3] for e in T.parse_abc(pa)["voices"]["Vocal"] if e[0] == "n"]
+    finally:
+        T.ACC_MODE = old
+    expect(nat[1] == 78 and std[1] == 77, f"accidental scope: native {nat} standard {std}")
+    expect(nat[-1] == 65 and std[-1] == 65, "accidental must reset at the barline")
+    for f in (p, pb, pt, pa):
+        os.unlink(f)
+    print("native dialect: all checks passed" if not bad else f"native dialect: {bad} check(s) FAILED")
+    return bad
+
+
 def main():
     fails, total = 0, 0
     tonics = [2, 0, 7, 9, 5, 10, 3]
@@ -111,7 +190,8 @@ def main():
             nz += D["target"]["maqam"] == M and D["target"]["tonic"] == t
             os.unlink(path)
     print(f"noisy (10% wrong notes): {nz}/{4 * len(tonics)} still identified")
-    return 1 if (fails or good < 4 or bad < 4) else 0
+    nb = native_tests()
+    return 1 if (fails or good < 4 or bad < 4 or nb) else 0
 
 
 if __name__ == "__main__":

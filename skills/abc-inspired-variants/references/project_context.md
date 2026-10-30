@@ -22,6 +22,9 @@ Read this once at the start of a session. It exists so the user never has to re-
 - They are **automatic transcriptions** of finished audio: a lossy sketch. Pitches are snapped to 12 notes (quarter-tones and glides vanish), rhythm is quantized, and the program guesses key, meter and tempo. Seen guesses: `K:D#m` 2/4 at 73 bpm; `K:Gm` 2/4 at 89; `K:Dm` 4/4 at 122. Different guesses for the same words are normal.
 - The `Vocal` voice is the sung line; the `Ins` voice holds only a little of the accompaniment (around 20-26% of the time has notes). Guitars, strings, drums, timbre, mix and vocal ornaments are not captured. `full_score` files add chord symbols above each bar.
 - Timestamps computed from a score can drift a few seconds from the real audio (one fill was at 0:44 by ear and 0:50 in the score).
+- The scores come from the YuE2 / SheetSage2 pipeline and follow a strict dialect (two voices, section comments, `L:1/16`,
+  chord symbols inside `Vocal` when present). See `native_dialect.md`. A newer generation also returns its own `score.abc`,
+  which can be fed back as the next seed (round trip, SKILL.md).
 - The user previews with the abcjs editor (https://www.abcjs.net/abcjs-editor): paste, press play, generic synth sound. Judge notes, rhythm and placement only, not tone.
 
 ## 3. How ABC edits reach real audio
@@ -34,6 +37,12 @@ There is no direct input path from ABC text to Suno or YuE. The routes that do r
   section's dynamics are. Not guaranteed to be obeyed; test, do not promise.
 - **Seed**: same lyrics + style with different seeds gives different takes; choosing the best of N by ear is the most
   reliable improvement lever found so far.
+
+- A live experiment (one session) showed that a model with the score alone could not name the source song until it
+  guessed candidates from era and language and checked each against the rhythm of its lyrics. Lesson for this skill: the
+  fingerprint (key, tempo, chord loop per section, structure, signature gesture) is what identifies a song, and the
+  number of sung notes per phrase is the room the lyrics have. Hence `brief`, the layout check, and the rule that variants
+  keep the sung-note count but change the rest. Identifying songs is not this skill's job.
 
 ## 4. What is already known
 

@@ -11,6 +11,16 @@ abc_tool.py - measure, validate and compare ABC scores (stdlib only).
   python abc_tool.py traits   score.abc [--peers DIR]    (what is distinctive about this song vs its sibling songs)
   python abc_tool.py survey   ROOT_FOLDER     (run `maqam` on every */score.abc; for calibration)
   python abc_tool.py progress ROOT_FOLDER     (which songs still lack VAR_A/B/C_score.abc + report)
+  python abc_tool.py brief    score.abc [--label Hijaz]   (one-shot fingerprint: header, maqam, sections, chord loops, hook, traits)
+  python abc_tool.py structure score.abc [--tonic D]      (sections from "% verse" comments: bars, notes, register, ending degree, chords)
+  python abc_tool.py lint     a.abc [b.abc ...]           (is it inside the YuE2 native ABC dialect? see references/native_dialect.md)
+  python abc_tool.py strip-chords src.abc dst.abc         (chord-free copy for cot="melody"; verifies every note is unchanged)
+  python abc_tool.py verify   SONG_FOLDER --maqam Hijaz --tonic D   (step 5 in one call: check+lint+modal+distance+structure parity)
+
+Accidental scope: YuE2's native dialect lets an accidental reach the same letter in EVERY octave until the barline,
+whereas abcjs / standard ABC applies it to one octave only. The parser follows the native rule by default (the
+scores come from that pipeline); set the environment variable ABC_ACC=abc to read with the standard rule.
+`lint` and `verify` flag every note where the two rules disagree.
 
 features : what a score "does" (phrase length, repeated-pitch share, notes/second,
            degrees used, short fills + their spacing, length in seconds).
@@ -87,7 +97,12 @@ def parse_dur(g):
     return Fraction(num, den)
 
 
+ACC_MODE = "abc" if __import__("os").environ.get("ABC_ACC", "").lower() == "abc" else "native"
+SECTION_WORDS = ("intro", "verse", "pre-chorus", "prechorus", "pre chorus", "chorus", "bridge", "interlude",
+                 "solo", "outro", "instrumental", "breakdown", "refrain", "hook", "coda", "ending", "drop")
+
 NOTE_RE = re.compile(
+    r'(?P<chord>"[^"]*")|'
     r"(?P<tup>\((?P<p>\d)(?::(?P<q>\d))?)|"
     r"(?P<bar>\|\]|\|\||\[\||:\||\|:|\|)|"
     r"(?P<rest>[zZxX])(?P<rd>\d*/*\d*)|"
@@ -95,14 +110,19 @@ NOTE_RE = re.compile(
 
 
 def parse_abc(path):
-    """Return dict(meta=..., voices={name: [events]}, bars={name: [bar_len_quarters]})"""
+    """Return dict(meta, voices={name: [events]}, bars={name: [[dur_q, expected_q]]}, chords={name: [(t_q, symbol, line)]},
+    sections=[(label, t_q, bar_index, line)], nbars={name: int}, warns=[(line, text)]).
+    An event is ("n", start_q, dur_q, midi, line) or ("r", start_q, dur_q, None, line)."""
     text = open(path, encoding="utf-8").read()
     unit = Fraction(1, 8)
     meter = Fraction(4, 4)
     qpm = 120.0
     tonic, sig = 0, {}
-    meter_str = ""
+    meter_str, unit_str = "", ""
+    meters_seen = []
     voices, bars = {}, {}
+    chords, nbars = {}, {}
+    sections = []
     clock = {}
     cur = "default"
     in_body = False
@@ -118,10 +138,29 @@ def parse_abc(path):
         voices.setdefault(v, [])
         bars.setdefault(v, [[0.0, bar_q()]])
         clock.setdefault(v, 0.0)
+        chords.setdefault(v, [])
+        nbars.setdefault(v, 0)
+
+    def close_bar(v):
+        dur, exp = bars[v][-1]
+        if dur > 0:
+            nbars[v] += max(1, int(round(dur / exp)))
+            bars[v].append([0.0, bar_q()])
 
     for ln, raw in enumerate(text.splitlines(), 1):
         line = raw.strip()
-        if not line or line.startswith("%"):
+        if not line:
+            continue
+        if line.startswith("%"):
+            m = re.match(r"%\s*([A-Za-z][A-Za-z\- ]*)", line)
+            if m and in_body and not line.startswith("%%"):
+                lab = m.group(1).strip().lower()
+                word = next((w for w in SECTION_WORDS if lab.startswith(w)), None)
+                if word:
+                    word = "pre-chorus" if word in ("prechorus", "pre chorus") else word
+                    t_now = max(clock.values()) if clock else 0.0
+                    b_now = max(nbars.values()) if nbars else 0
+                    sections.append((word, t_now, b_now, ln))
             continue
         fm = re.match(r"([A-Za-z]):\s*(.*)", line)
         if fm and not line.startswith("%%"):
@@ -132,6 +171,8 @@ def parse_abc(path):
                 first_k = False
             elif f == "M":
                 meter = parse_frac(v, meter) if "/" in v else meter
+                if v.strip() not in meters_seen:
+                    meters_seen.append(v.strip())
                 if not meter_str:
                     meter_str = v.strip()
                 for bl in bars.values():
@@ -139,6 +180,7 @@ def parse_abc(path):
                         bl[-1][1] = bar_q()
             elif f == "L":
                 unit = parse_frac(v, unit)
+                unit_str = v.strip()
             elif f == "Q":
                 q = re.match(r"\s*(?:(\d+)/(\d+)\s*=\s*)?(\d+)", v)
                 if q:
@@ -152,8 +194,7 @@ def parse_abc(path):
             continue
         if not in_body:
             continue
-        body = re.sub(r'"[^"]*"', "", line)          # chord symbols
-        body = re.sub(r"!\w+!|\+\w+\+", "", body)    # decorations
+        body = re.sub(r"!\w+!|\+\w+\+", "", line)    # decorations
         body = re.sub(r"\{[^}]*\}", "", body)        # grace notes
         for fld in re.findall(r"\[([A-Za-z]):([^\]]*)\]", body):
             if fld[0] == "M":
@@ -166,6 +207,11 @@ def parse_abc(path):
         ensure(cur)
         tup = None
         for t in NOTE_RE.finditer(body):
+            if t.group("chord"):
+                sym = t.group("chord")[1:-1].strip()
+                if sym and sym[0] not in "^_<>@":      # quoted annotations are not chords
+                    chords[cur].append((clock[cur], sym, ln))
+                continue
             if t.group("tup"):
                 p = int(t.group("p"))
                 q = int(t.group("q")) if t.group("q") else {2: 3, 3: 2, 4: 3, 6: 2}.get(p, 2)
@@ -173,8 +219,7 @@ def parse_abc(path):
                 continue
             if t.group("bar"):
                 mem = {}
-                if bars[cur][-1][0] > 0:
-                    bars[cur].append([0.0, bar_q()])
+                close_bar(cur)
                 continue
             fac = Fraction(1)
             if tup and tup[0] > 0:
@@ -187,6 +232,9 @@ def parse_abc(path):
                     dq = bar_q() * (int(t.group("rd")) if t.group("rd").isdigit() else 1)
                 else:
                     dq = float(unit * d * 4)
+                if tie_pending.get(cur):
+                    warns.append((ln, "a tie runs into a rest"))
+                    tie_pending[cur] = False
                 voices[cur].append(("r", clock[cur], dq, None, ln))
                 clock[cur] += dq
                 bars[cur][-1][0] += dq
@@ -196,7 +244,7 @@ def parse_abc(path):
             dq = float(unit * d * 4)
             up = letter.upper()
             octv = (1 if letter.islower() else 0) + oc.count("'") - oc.count(",")
-            key = (up, octv)
+            key = up if ACC_MODE == "native" else (up, octv)
             if t.group("acc"):
                 semis = {"^": 1, "^^": 2, "_": -1, "__": -2, "=": 0}[t.group("acc")]
                 mem[key] = semis
@@ -209,12 +257,18 @@ def parse_abc(path):
             if tie_pending.get(cur) and ev and ev[0] == "n" and ev[3] == pitch:
                 voices[cur][-1] = ("n", ev[1], ev[2] + dq, pitch, ev[4])  # merge tie
             else:
+                if tie_pending.get(cur):
+                    warns.append((ln, "a tie joins two different pitches"))
                 voices[cur].append(("n", clock[cur], dq, pitch, ln))
             tie_pending[cur] = bool(t.group("tie"))
             clock[cur] += dq
             bars[cur][-1][0] += dq
+    for v, pend in tie_pending.items():
+        if pend:
+            warns.append((0, f"voice {v} ends with an unresolved tie"))
     return dict(meta=dict(tonic=tonic, qpm=qpm, meter=float(meter * 4), meter_str=meter_str or str(meter),
-                          unit=str(unit)), voices=voices, bars=bars, warns=warns)
+                          unit=str(unit), unit_str=unit_str, meters=meters_seen),
+                voices=voices, bars=bars, chords=chords, sections=sections, nbars=nbars, warns=warns)
 
 
 # ---------------------------------------------------------------- features
@@ -268,7 +322,7 @@ def voice_features(ev, meta):
         k = tuple(iv[i:i + 5])
         g[k] = g.get(k, 0) + 1
     top = sorted(g.items(), key=lambda a: -a[1])[:2]
-    short = [p for p in phr if len(p) <= 9 and sec(p[0][1], qpm) > 10]
+    short = [p for p in phr if 3 <= len(p) <= 9 and sec(p[0][1], qpm) > 10]   # >= 3 notes: 1-2 note groups are held notes, not fills
     starts = [sec(p[0][1], qpm) for p in short]
     gaps = [starts[i + 1] - starts[i] for i in range(len(starts) - 1)]
     best = 0                      # longest run of fills spaced almost evenly (+-25%)
@@ -361,6 +415,11 @@ def contour(events):
     return [q[i + 1] - q[i] for i in range(len(q) - 1)]
 
 
+def onset_grid(events):
+    """Note-start positions on a 1/32-note grid: the rhythm skeleton, independent of pitch."""
+    return {round(e[1] * 8) for e in events if e[0] == "n"}
+
+
 def compare(cand_path, ref_paths):
     C = parse_abc(cand_path)
     rows = []
@@ -375,8 +434,14 @@ def compare(cand_path, ref_paths):
                 continue
             n, run = longest_shared(a, b)
             ratio = difflib.SequenceMatcher(None, a, b, autojunk=False).ratio()
+            ra, rb = onset_grid(C["voices"][v]), onset_grid(R["voices"][v])
+            rhythm = len(ra & rb) / max(len(ra | rb), 1)
+            da = [round(e[2] * 8) for e in C["voices"][v] if e[0] == "n"]
+            db = [round(e[2] * 8) for e in R["voices"][v] if e[0] == "n"]
+            dseq = difflib.SequenceMatcher(None, da, db, autojunk=False).ratio()
             rows.append(dict(ref=rp, voice=v, longest_identical_interval_run=n,
                              overall_similarity=round(ratio, 2),
+                             rhythm_similarity=round(rhythm, 2), duration_similarity=round(dseq, 2),
                              verdict="TOO CLOSE (>=10 identical moves) - rewrite" if n >= 10
                              else "shares a motif-sized cell (6-9) - fine if intended" if n >= 6 else "ok"))
     return rows
@@ -613,7 +678,8 @@ def cmd_scale(maq, tonic, key_from):
 
 
 # ------------------------------------------------------------------- modal
-def cmd_modal(path, maq, tonic):
+def modal_report(path, maq, tonic):
+    """Return (msgs, info, bad). msgs = [(level, text)], level in FIX / WARN / '  ->'."""
     M = maqam_name(maq)
     t = parse_tonic(tonic)
     d = MAQAMS[M]
@@ -670,6 +736,13 @@ def cmd_modal(path, maq, tonic):
                 msgs.append(("WARN", f"{tag}: only {round(100 * ends.get(0, 0))}% of phrases rest on the tonic; "
                                      "a maqam needs a clear home note"))
     bad = any(m[0] == "FIX" for m in msgs)
+    return msgs, info, bad
+
+
+def cmd_modal(path, maq, tonic):
+    M = maqam_name(maq)
+    t = parse_tonic(tonic)
+    msgs, info, bad = modal_report(path, maq, tonic)
     print(("FIX  " if bad else "OK   ") + f"{path}   [{M} on {PC_NAMES[t]}]")
     for l, m in msgs:
         print(f"   {l:5} {m}")
@@ -740,6 +813,438 @@ def cmd_traits(path, peers_dir):
     return 0
 
 
+
+# ============================================ structure, dialect, verification
+# What we learned from identifying a famous song from its score alone: the recognisable "fingerprint" is not only
+# the melody line. It is key + tempo + the chord loop of each section + the section layout + a few signature
+# gestures (a riff, a held high note). These helpers measure that, and check that variants keep the layout the
+# fixed lyrics need and stay inside the dialect the generator reads.
+NATIVE_DURS = {1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48}
+CHORD_RE = re.compile(r"^[A-G](?:##|bb|#|b)?(?:maj7|m\(maj7\)|m7b5|dim7|7sus4|sus4|sus2|aug|dim|m7|m6|m|6|7)?"
+                      r"(?:/[A-G](?:##|bb|#|b)?)?$")
+KEY_RE = re.compile(r"^\s*[A-G][#b]?\s*(?i:m|min|minor|maj|major)?\s*$")
+NOTE_NAMES = ["C", "Db", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"]
+
+
+def midi_name(m):
+    return f"{NOTE_NAMES[m % 12]}{m // 12 - 1}"
+
+
+def collapse(seq):
+    out = []
+    for x in seq:
+        if not out or out[-1] != x:
+            out.append(x)
+    return out
+
+
+def minimal_period(seq):
+    n = len(seq)
+    for p in range(1, n // 2 + 1):
+        if n % p == 0 and seq == seq[:p] * (n // p):
+            return seq[:p], n // p
+    return seq, 1
+
+
+def section_table(P, tonic):
+    """One row per '% verse'-style section: layout, sung-note count, register, where it ends, chords."""
+    mv = main_voice_name(P)
+    if mv is None:
+        return []
+    ev = P["voices"][mv]
+    qpm = P["meta"]["qpm"]
+    total_q = max((e[1] + e[2] for v in P["voices"].values() for e in v), default=0.0)
+    total_b = max(P["nbars"].values()) if P["nbars"] else 0
+    secs = list(P["sections"])
+    if not secs or secs[0][1] > 1e-6:
+        secs.insert(0, ("(start)" if secs else "all", 0.0, 0, 0))
+    rows = []
+    for i, (lab, t0, b0, ln) in enumerate(secs):
+        t1 = secs[i + 1][1] if i + 1 < len(secs) else total_q
+        b1 = secs[i + 1][2] if i + 1 < len(secs) else total_b
+        notes = [e for e in ev if e[0] == "n" and t0 - 1e-6 <= e[1] < t1 - 1e-6]
+        ins = [e for vn, vv in P["voices"].items() if vn != mv for e in vv
+               if e[0] == "n" and t0 - 1e-6 <= e[1] < t1 - 1e-6]
+        ch = collapse([c[1] for c in P["chords"].get(mv, []) if t0 - 1e-6 <= c[0] < t1 - 1e-6])
+        per, rep = minimal_period(ch)
+        row = dict(label=lab, start_bar=b0 + 1, bars=max(b1 - b0, 0), start_sec=round(sec(t0, qpm)),
+                   length_sec=round(sec(t1 - t0, qpm)), vocal_notes=len(notes), ins_notes=len(ins),
+                   chords=ch, chord_loop=per, chord_loop_reps=rep)
+        if notes:
+            ps = [n[3] for n in notes]
+            iv = [b[3] - a[3] for a, b in zip(notes, notes[1:])]
+            apex = max(notes, key=lambda n: n[3])
+            row.update(lo=min(ps), hi=max(ps), mean_pitch=round(statistics.mean(ps), 1),
+                       notes_per_bar=round(len(notes) / max(b1 - b0, 1), 1),
+                       repeated_pitch_pct=round(100 * sum(1 for x in iv if x == 0) / max(len(iv), 1)),
+                       first_degree=DEG[(notes[0][3] - tonic) % 12], last_degree=DEG[(notes[-1][3] - tonic) % 12],
+                       last_note_beats=round(notes[-1][2], 1), apex_degree=DEG[(apex[3] - tonic) % 12],
+                       apex_at_pct=round(100 * (apex[1] - t0) / max(t1 - t0, 1e-6)))
+        rows.append(row)
+    return rows
+
+
+def chord_loops(P, n=4, top=3):
+    mv = main_voice_name(P)
+    seq = collapse([c[1] for c in P["chords"].get(mv, [])]) if mv else []
+    grams = {}
+    for i in range(len(seq) - n + 1):
+        k = tuple(seq[i:i + n])
+        grams[k] = grams.get(k, 0) + 1
+    return sorted(grams.items(), key=lambda a: -a[1])[:top], len(seq)
+
+
+def hook_summary(P):
+    """The instrumental voice's first figure of >= 4 notes and how often a similar figure returns."""
+    mv = main_voice_name(P)
+    qpm = P["meta"]["qpm"]
+    out = []
+    for v, evs in P["voices"].items():
+        if v == mv:
+            continue
+        phr = [p for p in phrases(evs, gap_q=2.0) if len(p) >= 4]
+        if not phr:
+            out.append(f"{v}: no figure of >= 4 notes (instrumental line is almost silent)")
+            continue
+        first = phr[0]
+        shape = intervals(first)
+        back = [p for p in phr[1:] if difflib.SequenceMatcher(None, shape, intervals(p), autojunk=False).ratio() >= 0.7]
+        t = lambda p: f"{int(sec(p[0][1], qpm)) // 60}:{int(sec(p[0][1], qpm)) % 60:02d}"
+        out.append(f"{v}: first figure at {t(first)} ({len(first)} notes, {midi_name(min(n[3] for n in first))}-"
+                   f"{midi_name(max(n[3] for n in first))}); similar figure returns {len(back)}x"
+                   + (" at " + ", ".join(t(p) for p in back[:6]) if back else "")
+                   + f"; {len(phr)} figures of >= 4 notes in total")
+    return out
+
+
+def print_sections(rows, tonic_name=None):
+    print(f"   sections ({len(rows)}):" + (f"  degrees are relative to {tonic_name}" if tonic_name else ""))
+    for i, r in enumerate(rows, 1):
+        head = (f"   {i:>2} {r['label']:<10} bar {r['start_bar']:>3} +{r['bars']:<3} {r['start_sec']:>3}s/{r['length_sec']:>3}s  "
+                f"vocal {r['vocal_notes']:>3} notes, ins {r['ins_notes']:>3}")
+        if r["vocal_notes"]:
+            head += (f" | {r['notes_per_bar']}/bar, {midi_name(r['lo'])}..{midi_name(r['hi'])} (mean {r['mean_pitch']}), "
+                     f"starts {r['first_degree']}, ends {r['last_degree']} (held {r['last_note_beats']} beats), "
+                     f"apex {r['apex_degree']} at {r['apex_at_pct']}% of the section")
+        print(head)
+        if r["chords"]:
+            lp = " ".join(r["chord_loop"])
+            print(f"       chords: {lp}" + (f"  x{r['chord_loop_reps']}" if r["chord_loop_reps"] > 1 else ""))
+
+
+def cmd_structure(path, tonic, as_json=False):
+    P = parse_abc(path)
+    if main_voice_name(P) is None:
+        print(f"{path}: no notes found")
+        return 1
+    t = parse_tonic(tonic) if tonic else (detect(P)["target"]["tonic"])
+    rows = section_table(P, t)
+    if as_json:
+        print(json.dumps(rows, ensure_ascii=False, indent=1))
+        return 0
+    print(f"== {path}")
+    print_sections(rows, PC_NAMES[t])
+    loops, n = chord_loops(P)
+    if loops:
+        print(f"   chord loops (4-chord windows over {n} chord changes): " +
+              "; ".join(f"{' '.join(k)} x{c}" for k, c in loops))
+    else:
+        print("   no chord symbols in this file (melody-only score)")
+    for h in hook_summary(P):
+        print("   hook: " + h)
+    return 0
+
+
+# ------------------------------------------------------------ native dialect
+def lint(path):
+    """Is the file inside the ABC dialect YuE2 reads (see references/native_dialect.md)? -> [(FIX|WARN, text)]"""
+    msgs = []
+    have = set()
+    for ln, raw in enumerate(open(path, encoding="utf-8").read().splitlines(), 1):
+        s = raw.strip()
+        if not s:
+            continue
+        if s.startswith("%%"):
+            msgs.append(("FIX", f"line {ln}: '%%' directive is outside the native dialect"))
+            continue
+        if s.startswith("%"):
+            continue
+        m = re.match(r"([A-Za-z]):\s*(.*)$", s)
+        if m:
+            f, v = m.group(1), m.group(2).strip()
+            have.add(f)
+            if f == "K" and not KEY_RE.match(v):
+                msgs.append(("FIX", f"line {ln}: K:{v} is not a plain major/minor key (native dialect has no modes)"))
+            elif f == "L":
+                d = re.match(r"^1/(\d+)$", v)
+                if not d or int(d.group(1)) & (int(d.group(1)) - 1) or int(d.group(1)) > 1024:
+                    msgs.append(("FIX", f"line {ln}: L:{v} must be 1/<power of two> (keep the source's value)"))
+            elif f == "M" and not re.match(r"^\d+/\d+$", v):
+                msgs.append(("FIX", f"line {ln}: M:{v} must be an explicit fraction such as 4/4"))
+            elif f == "Q" and not re.match(r"^1/4\s*=\s*\d+$", v):
+                msgs.append(("FIX", f"line {ln}: Q:{v} must look like Q:1/4=104 (integer quarter-note tempo)"))
+            elif f == "V" and (v.split() or [""])[0] not in ("Vocal", "Ins"):
+                msgs.append(("FIX", f"line {ln}: voice '{(v.split() or [''])[0]}' (native dialect has only Vocal and Ins)"))
+            elif f in "wW":
+                msgs.append(("FIX", f"line {ln}: lyric lines (w:/W:) are outside the native dialect"))
+            continue
+        body = re.sub(r'"[^"]*"', "", s)
+        body = re.sub(r"\[[A-Za-z]:[^\]]*\]", "", body)
+        body = re.sub(r"%.*$", "", body)
+        for pat, what in ((r"\(", "slur or tuplet"), (r"\{", "grace note"), (r"![^!]*!|\+\w+\+", "decoration"),
+                          (r"\|:|:\||\|\d|\[\d|::", "repeat sign or alternate ending"), (r"[<>]", "broken rhythm"),
+                          (r"\[[A-Ga-g^_=]", "stacked notes (polyphony)"), (r"[zZ]\d*-", "tied rest")):
+            if re.search(pat, body):
+                msgs.append(("FIX", f"line {ln}: {what} is outside the native dialect"))
+        bad = set()
+        for t in NOTE_RE.finditer(body):
+            if t.group("rest"):
+                if t.group("rest") in "ZX":
+                    continue
+                d = t.group("rd")
+            elif t.group("l"):
+                d = t.group("d")
+            else:
+                continue
+            if d and ("/" in d or int(d) not in NATIVE_DURS):
+                bad.add(d)
+        if bad:
+            msgs.append(("FIX", f"line {ln}: duration multiplier(s) {sorted(bad)} not supported "
+                                f"(use {sorted(NATIVE_DURS)}; write 10 as 8-2 with a tie, 5 as 4-1)"))
+    for need in ("K", "M", "Q"):
+        if need not in have:
+            msgs.append(("FIX", f"header has no {need}: line"))
+    if "L" not in have:
+        msgs.append(("WARN", "header has no L: line (the native exporter always writes one)"))
+    P = parse_abc(path)
+    seen = set()
+    for v, lst in P["chords"].items():
+        for _, sym, ln in lst:
+            if not CHORD_RE.match(sym) and sym not in seen:
+                seen.add(sym)
+                msgs.append(("FIX", f"line {ln}: chord '{sym}' is not in the native vocabulary "
+                                    "(maj, m, dim, aug, 7, maj7, m7, dim7, m7b5, sus4, sus2, 6, m6, 7sus4, m(maj7); slash bass ok)"))
+        if lst and v != main_voice_name(P):
+            msgs.append(("WARN", f"chord symbols in voice {v}: the native dialect keeps harmony in the main voice"))
+    for ln, w in P["warns"]:
+        msgs.append(("FIX", f"line {ln}: {w}" if ln else w))
+    ac = acc_conflicts(path)
+    if ac:
+        lines = sorted({l for _, l, _, _ in ac})
+        msgs.append(("FIX", f"accidental scope: {len(ac)} note(s) sound different under the native rule (accidental reaches "
+                            f"the same letter in every octave) and the abcjs rule (one octave) - restate the accidental "
+                            f"(^ _ =) on each of them. Lines: {lines[:12]}"))
+    return msgs
+
+
+def acc_conflicts(path):
+    """Notes whose pitch depends on the accidental-scope convention (native vs standard/abcjs)."""
+    global ACC_MODE
+    keep = ACC_MODE
+    try:
+        ACC_MODE = "native"
+        A = parse_abc(path)
+        ACC_MODE = "abc"
+        B = parse_abc(path)
+    finally:
+        ACC_MODE = keep
+    out = []
+    for v in A["voices"]:
+        na = [e for e in A["voices"][v] if e[0] == "n"]
+        nb = [e for e in B["voices"].get(v, []) if e[0] == "n"]
+        for x, y in zip(na, nb):
+            if x[3] != y[3]:
+                out.append((v, x[4], x[3], y[3]))
+                if len(na) != len(nb):
+                    break
+    return out
+
+
+def strip_chords(src_path, dst_path):
+    """Write a chord-free copy (for cot="melody"); refuse to overwrite; prove every note is unchanged."""
+    import os
+    if os.path.exists(dst_path):
+        raise SystemExit(f"refusing to overwrite {dst_path}")
+    out, removed = [], 0
+    for raw in open(src_path, encoding="utf-8").read().splitlines():
+        s = raw.strip()
+        if not s or s.startswith("%") or re.match(r"[A-Za-z]:", s):
+            out.append(raw)
+            continue
+        new = re.sub(r'"[^"]*"', "", raw)
+        removed += len(re.findall(r'"[^"]*"', raw))
+        out.append(new)
+    with open(dst_path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write("\n".join(out) + "\n")
+    A, B = parse_abc(src_path), parse_abc(dst_path)
+    strip = lambda P: {v: [e[:4] for e in ev] for v, ev in P["voices"].items()}
+    if strip(A) != strip(B) or A["meta"]["qpm"] != B["meta"]["qpm"]:
+        os.unlink(dst_path)
+        raise SystemExit("strip-chords changed the notes - aborted, nothing written")
+    print(f"wrote {dst_path}: removed {removed} chord symbols; all notes, onsets, durations and tempo verified identical")
+    return 0
+
+
+# ------------------------------------------------------- parity with source
+def pct_diff(a, b):
+    return abs(a - b) / max(a, b, 1e-9)
+
+
+def parity(cand, ref):
+    """Does the variant keep the layout the (fixed) lyrics were sung over? -> [(FIX|WARN, text)]"""
+    A, B = parse_abc(cand), parse_abc(ref)
+    a, b = section_table(A, 0), section_table(B, 0)
+    msgs = []
+    la, lb = [r["label"] for r in a], [r["label"] for r in b]
+    if la != lb:
+        msgs.append(("FIX", f"section order differs: source {lb} vs variant {la}"))
+        return msgs
+    for i, (x, y) in enumerate(zip(a, b), 1):
+        tag = f"section {i} ({x['label']})"
+        d = pct_diff(x["bars"], y["bars"])
+        if abs(x["bars"] - y["bars"]) >= 2 and d > 0.10:
+            msgs.append(("FIX" if d > 0.25 else "WARN", f"{tag}: {x['bars']} bars vs {y['bars']} in the source ({round(100 * d)}% off)"))
+        if y["vocal_notes"] >= 8:
+            d = pct_diff(x["vocal_notes"], y["vocal_notes"])
+            if d > 0.15:
+                msgs.append(("FIX" if d > 0.35 else "WARN",
+                             f"{tag}: {x['vocal_notes']} sung notes vs {y['vocal_notes']} in the source ({round(100 * d)}% off); "
+                             "the lyrics are fixed, so this is the room the words have"))
+    tb = pct_diff(sum(r["bars"] for r in a), sum(r["bars"] for r in b))
+    if tb > 0.10:
+        msgs.append(("FIX" if tb > 0.25 else "WARN", f"total length differs by {round(100 * tb)}% in bars"))
+    return msgs
+
+
+MEASURES = [  # (name, getter(features, meta), relative threshold or None for 'different value')
+    ("notes/sec", lambda f, m: f["notes_per_sec_when_sounding"], 0.20),
+    ("median note length", lambda f, m: f["median_note_sec"], 0.20),
+    ("notes per phrase", lambda f, m: f["avg_notes_per_phrase"], 0.20),
+    ("range", lambda f, m: f["range_semitones"], 0.20),
+    ("silence share", lambda f, m: 100 - f["sounding_pct"], 0.30),
+    ("number of short fills", lambda f, m: len(f["short_groups"]), 0.30),
+    ("tempo", lambda f, m: m["qpm"], 0.05),
+]
+
+
+def distinctness(p1, p2):
+    out = []
+    P1, P2 = parse_abc(p1), parse_abc(p2)
+    m1, m2 = main_voice_name(P1), main_voice_name(P2)
+    f1, f2 = voice_features(P1["voices"][m1], P1["meta"]), voice_features(P2["voices"][m2], P2["meta"])
+    for name, g, thr in MEASURES:
+        a, b = g(f1, P1["meta"]), g(f2, P2["meta"])
+        if pct_diff(a, b) >= thr and abs(a - b) > 1e-9:
+            out.append(name)
+    n1 = next((e for e in P1["voices"][m1] if e[0] == "n"), None)
+    n2 = next((e for e in P2["voices"][m2] if e[0] == "n"), None)
+    if n1 and n2 and (n1[3] - P1["meta"]["tonic"]) % 12 != (n2[3] - P2["meta"]["tonic"]) % 12:
+        out.append("opening degree")
+    return out, len(MEASURES) + 1
+
+
+def cmd_verify(folder, maq, tonic, source=None):
+    """Step 5 of the skill in one call. Exit code 1 if any FIX remains."""
+    import glob, os
+    src = source or os.path.join(folder, "score.abc")
+    if not os.path.exists(src):
+        print(f"no source score at {src}")
+        return 2
+    files = sorted(glob.glob(os.path.join(folder, "VAR_*_score*.abc")))
+    if not files:
+        print(f"no VAR_*_score*.abc files in {folder}")
+        return 2
+    M = maqam_name(maq)
+    t = parse_tonic(tonic)
+    mvs = main_voice_name(parse_abc(src))
+    print(f"== verify {folder}   [{M} on {PC_NAMES[t]}]   source: {os.path.basename(src)}")
+    any_fix = False
+    summary = []
+    for f in files:
+        name = os.path.basename(f)
+        letter = (re.match(r"VAR_([A-Z])_", name) or [None, "?"])[1]
+        cap = 0.60 if letter == "A" else 0.50
+        fx, wn = [], []
+        fx += [f"bars: {m}" for m in check(f)]
+        for lvl, m in lint(f):
+            (fx if lvl == "FIX" else wn).append(f"dialect: {m}")
+        for lvl, m in modal_report(f, M, tonic)[0]:
+            if lvl == "FIX":
+                fx.append(f"maqam: {m}")
+            elif lvl == "WARN":
+                wn.append(f"maqam: {m}")
+        run = sim = rhy = None
+        for r in compare(f, [src]):
+            if r["voice"] != mvs:
+                continue
+            run, sim, rhy = r["longest_identical_interval_run"], r["overall_similarity"], r["rhythm_similarity"]
+            if run > 7:
+                fx.append(f"distance: {run} identical melodic moves in a row (limit 7)")
+            if sim > cap:
+                fx.append(f"distance: melodic similarity {sim} (limit {cap} for {letter})")
+            if letter in "BC" and rhy > 0.60:
+                wn.append(f"distance: rhythm skeleton shared {rhy} - recipe {letter} promised a different rhythm")
+        for lvl, m in parity(f, src):
+            (fx if lvl == "FIX" else wn).append(f"layout: {m}")
+        P = parse_abc(f)
+        for i, r in enumerate(section_table(P, t), 1):
+            if r["vocal_notes"] and r["label"] not in ("intro", "(start)") and r["last_degree"] not in ("1", "5"):
+                wn.append(f"cadence: section {i} ({r['label']}) ends on degree {r['last_degree']}, not tonic or 5th "
+                          "(fine only if it is a deliberate open ending)")
+        summary.append((name, len(fx), len(wn), run, sim, rhy))
+        any_fix |= bool(fx)
+        print(("FIX  " if fx else "OK   ") + name)
+        for x in fx:
+            print("   FIX ", x)
+        for x in wn:
+            print("   WARN", x)
+    print("-- how different are the variants from each other (need >= 3 measurable ways each pair)")
+    for i in range(len(files)):
+        for j in range(i + 1, len(files)):
+            a, b = os.path.basename(files[i]), os.path.basename(files[j])
+            rr = compare(files[i], [files[j]])
+            rr = [r for r in rr if r["voice"] == mvs]
+            ways, tot = distinctness(files[i], files[j])
+            line = f"   {a} vs {b}: differ in {len(ways)}/{tot} ways ({', '.join(ways) or 'none'})"
+            if rr:
+                line += f"; identical run {rr[0]['longest_identical_interval_run']}, melodic similarity {rr[0]['overall_similarity']}, rhythm {rr[0]['rhythm_similarity']}"
+            print(line + ("   <- WARN: fewer than 3 ways" if len(ways) < 3 else ""))
+    print("-- table: file, FIX, WARN, longest identical run, melodic sim, rhythm sim (vs source)")
+    for s in summary:
+        print("   " + "  ".join(str(x) for x in s))
+    print("RESULT: " + ("FIX lines remain" if any_fix else "no FIX lines"))
+    return 1 if any_fix else 0
+
+
+def cmd_brief(path, label):
+    import os
+    P = parse_abc(path)
+    mv = main_voice_name(P)
+    if mv is None:
+        print(f"{path}: no notes found")
+        return 1
+    meta = P["meta"]
+    total_q = max(e[1] + e[2] for v in P["voices"].values() for e in v)
+    print(f"== BRIEF {path}")
+    print(f"   header: tempo {meta['qpm']:.0f} bpm, meter(s) {', '.join(meta['meters']) or meta['meter_str']}, "
+          f"L:{meta['unit_str'] or meta['unit']}, K: tonic guess {PC_NAMES[meta['tonic']]} (guess only), "
+          f"{sec(total_q, meta['qpm']):.0f} s, {max(P['nbars'].values())} bars, "
+          f"{len(P['sections'])} labelled sections, chords: {'yes' if any(P['chords'].values()) else 'no'}")
+    D = detect(P, label)
+    cmd_maqam(path, label)
+    t = D["target"]["tonic"]
+    print()
+    cmd_structure(path, str(t))
+    ac = acc_conflicts(path)
+    if ac:
+        print(f"   note: {len(ac)} note(s) depend on the accidental-scope convention (native vs abcjs); "
+              "this tool reads them the native way")
+    if label:
+        print()
+        cmd_traits(path, None)
+    return 0
+
+
 # -------------------------------------------------------- survey / progress
 LABEL_RE = re.compile(r"^(Ajam|Hijaz|Kurd|Nahawand)", re.I)
 
@@ -765,19 +1270,27 @@ def label_of(path):
 def cmd_survey(root):
     rows = []
     for p in find_scores(root):
-        D = detect(parse_abc(p), label_of(p))
+        P = parse_abc(p)
+        D = detect(P, label_of(p))
         if D is None:
-            rows.append((p, label_of(p), "EMPTY", "", "", "", ""))
+            rows.append((p, label_of(p), "EMPTY", "", "", "", "", "", "", ""))
             continue
         T, L = D["target"], D["label_best"]
+        nfix = sum(1 for lvl, _ in lint(p) if lvl == "FIX")
         rows.append((p, label_of(p), D["status"], f"{T['maqam']}@{PC_NAMES[T['tonic']]}", T["fit"],
-                     L["fit"] if L else "", ("tonic-unsure " if D["tonic_alternatives"] else "") + ("low-fit" if D["low_fit"] else "")))
-    print("status,label,target,target_fit,label_fit,notes,path")
-    for p, lab, st, tg, tf, lf, nt in rows:
-        print(f"{st},{lab},{tg},{tf},{lf},{nt.strip()},{p}")
+                     L["fit"] if L else "", (("tonic-unsure " if D["tonic_alternatives"] else "") +
+                                             ("low-fit" if D["low_fit"] else "")).strip(),
+                     nfix, len(acc_conflicts(p)), f"{'chords' if any(P['chords'].values()) else 'nochords'}/{len(P['sections'])}sec"))
+    print("status,label,target,target_fit,label_fit,notes,dialect_fix_lines,accidental_conflicts,chords/sections,path")
+    for p, lab, st, tg, tf, lf, nt, nf, ac, cs in rows:
+        print(f"{st},{lab},{tg},{tf},{lf},{nt},{nf},{ac},{cs},{p}")
     from collections import Counter
     c = Counter(r[2] for r in rows)
     print(f"\n# {len(rows)} scores: " + ", ".join(f"{k}={v}" for k, v in c.items()))
+    nd = sum(1 for r in rows if r[7] not in ("", 0))
+    na = sum(1 for r in rows if r[8] not in ("", 0))
+    print(f"# dialect: {nd} score(s) have lint FIX lines (outside the YuE2 native dialect); "
+          f"{na} score(s) contain notes whose pitch depends on the accidental-scope convention")
     print("# Expect most CONFIRMED. If many are OVERRIDE/KEEP_LABEL, either the labels or the thresholds "
           "(KEEP_MARGIN etc. at the top of abc_tool.py) need a look.")
     return 0
@@ -785,7 +1298,7 @@ def cmd_survey(root):
 
 def cmd_progress(root):
     import os
-    need = ["VAR_A_score.abc", "VAR_B_score.abc", "VAR_C_score.abc", "VAR_REPORT.md"]
+    need = ["VAR_A_score.abc", "VAR_B_score.abc", "VAR_C_score.abc", "VAR_REPORT.md", "CONTROL_score.abc"]
     done = todo = 0
     for p in find_scores(root):
         d = os.path.dirname(p)
@@ -818,6 +1331,12 @@ def main(argv):
     a = sp.add_parser("traits"); a.add_argument("file"); a.add_argument("--peers")
     a = sp.add_parser("survey"); a.add_argument("root")
     a = sp.add_parser("progress"); a.add_argument("root")
+    a = sp.add_parser("brief"); a.add_argument("file"); a.add_argument("--label")
+    a = sp.add_parser("structure"); a.add_argument("file"); a.add_argument("--tonic"); a.add_argument("--json", action="store_true")
+    a = sp.add_parser("lint"); a.add_argument("files", nargs="+")
+    a = sp.add_parser("strip-chords"); a.add_argument("src"); a.add_argument("dst")
+    a = sp.add_parser("verify"); a.add_argument("folder"); a.add_argument("--maqam", required=True)
+    a.add_argument("--tonic", required=True); a.add_argument("--source")
     args = ap.parse_args(argv[1:])
     c = args.cmd
     if c == "features":
@@ -860,7 +1379,8 @@ def main(argv):
             for r in compare(args.cand, paths):
                 print(f"   {r['ref']} [{r['voice']}]: longest identical run = "
                       f"{r['longest_identical_interval_run']} intervals, "
-                      f"similarity {r['overall_similarity']} -> {r['verdict']}")
+                      f"similarity {r['overall_similarity']} -> {r['verdict']}   "
+                      f"| rhythm skeleton shared {r['rhythm_similarity']}, note-length sequence {r['duration_similarity']}")
         return 0
     if c == "maqam":
         return cmd_maqam(args.file, maqam_name(args.label) if args.label else None, args.json)
@@ -874,6 +1394,24 @@ def main(argv):
         return cmd_survey(args.root)
     if c == "progress":
         return cmd_progress(args.root)
+    if c == "brief":
+        return cmd_brief(args.file, maqam_name(args.label) if args.label else None)
+    if c == "structure":
+        return cmd_structure(args.file, args.tonic, args.json)
+    if c == "lint":
+        bad = 0
+        for f in args.files:
+            m = lint(f)
+            fx = any(l == "FIX" for l, _ in m)
+            print(("FIX  " if fx else "OK   ") + f)
+            for l, x in m:
+                print(f"   {l:4} {x}")
+            bad += fx
+        return 1 if bad else 0
+    if c == "strip-chords":
+        return strip_chords(args.src, args.dst)
+    if c == "verify":
+        return cmd_verify(args.folder, args.maqam, args.tonic, args.source)
 
 
 if __name__ == "__main__":

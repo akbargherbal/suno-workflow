@@ -1,6 +1,7 @@
 # Writing ABC that plays correctly in abcjs
 
 The user pastes your file into https://www.abcjs.net/abcjs-editor and presses play. Keep the output close to the format his transcriber produces so it behaves the same.
+The exact dialect (what is allowed, accidental scope, chord vocabulary) is in `native_dialect.md`; `abc_tool.py lint` checks it.
 
 ## Contents
 1. Header skeleton
@@ -32,7 +33,8 @@ V: Ins
 
 - `M:` meter (bar size), `L:1/16` unit note length, `Q:1/4=89` quarter-notes per minute, `K:` key. Keep `L:1/16`.
 - Every voice block is repeated per section, so bars from different voices line up: write the Vocal bars for a section, then the Ins bars for the same section.
-- Chord symbols (optional) go in quotes before a note or rest: `"Dm"A4`.
+- Chord symbols go in quotes before a note or rest in `Vocal`: `"Dm"A4`. Variants are written without them by default
+  (see SKILL.md step 3); the source may have them.
 
 ## 2. Bar arithmetic (the most common failure)
 
@@ -54,6 +56,8 @@ With `L:1/16`: a bare note letter lasts 1 unit; a digit multiplies (`A4` = 4 uni
 - Uppercase `C D E F G A B` = the octave from middle C; lowercase `c d e f g a b` = one octave up; `c'` two up; `C,` one octave below.
 - The `K:` key signature already sharpens/flattens notes (`K:Gm` = Bb and Eb; `K:Dm` = Bb; `K:D#m` = six sharps). Write plain letters for those notes. To override, use `^` sharp, `_` flat, `=` natural; the accidental holds for the rest of that bar.
 - Tie with `-` right after the note: `d4-|d4` (same pitch continues across the barline).
+- **Accidental scope differs between readers.** The pipeline that made the scores applies `^f` to every `f`/`F` until the barline;
+  abcjs applies it to that octave only. Put the accidental on each note that needs it (`lint` lists conflicts).
 - Leave grace notes, tuplets and decorations out unless needed; they make bar sums harder to check.
 - Quarter-tone accidentals exist in ABC 2.1 but the preview may play them as ordinary notes; if you use them, tell the user.
 
@@ -63,6 +67,8 @@ With `L:1/16`: a bare note letter lasts 1 unit; a digit multiplies (`A4` = 4 uni
 - Forgetting that `K:` changes what a plain letter means.
 - Mixing `z` (one bar part) and `Z` (whole bars) inside a bar.
 - Lyrics: do not add `w:` lines for Arabic diacritized text; the renderer handles it badly. Use `% line N` comments instead.
+- Using anything outside the dialect (tuplets, slurs, grace notes, repeats, `%%` lines, a third voice, `K:` modes):
+  `lint` fails it, and the file may not go back into the pipeline.
 - Very long files: keep sketches to the sections asked for. A full song is about 100-130 lines.
 
 ## 6. Minimal example (2/4, a fill answering a sung phrase)
