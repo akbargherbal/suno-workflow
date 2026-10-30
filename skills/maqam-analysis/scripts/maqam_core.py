@@ -202,13 +202,40 @@ def _argmax(d):
     return max(d, key=d.get) if d else None
 
 
-def interpret(p: Profile, other: "Profile | None" = None):
+def _circ(a, b):
+    return min(abs(a - b) % 1200, 1200 - abs(a - b) % 1200)
+
+
+def ghammaz_estimate(p: Profile, tonic_pc: float):
+    """Secondary resting note (candidate ghammaz): the non-tonic degree 250-1000 c above the tonic
+    on which phrases most often end, with sung time as a minor weight. Needs phrase-final data."""
+    fin, dur = p.norm(p.finals), p.norm(p.pcs)
+    best, bs = None, 0.0
+    for pc in dur:
+        rel = (pc - tonic_pc) % 1200
+        if not 250 <= rel <= 1000:
+            continue
+        sc = 0.7 * fin.get(pc, 0.0) + 0.3 * dur.get(pc, 0.0)
+        if sc > bs:
+            best, bs = pc, sc
+    if best is None or fin.get(best, 0.0) < 0.05:
+        return None
+    return {"note": name_of(best), "interval_cents": round((best - tonic_pc) % 1200),
+            "final_share": round(fin.get(best, 0.0), 3), "dur_share": round(dur.get(best, 0.0), 3)}
+
+
+def interpret(p: Profile, other: "Profile | None" = None, grid_reliable: bool = True):
     """Full interpretation of one profile.
 
     Two separate confidences are returned because they answer different questions:
-      tonic_confidence  - do independent cues (melody, chords, declared key, other voice) agree?
+      tonic_confidence  - do independent cues agree?  Cues: (1) most-used note, (2) phrase endings,
+                          (3) tool key/chords, (4) other voice. (1) and (2) come from the same melody
+                          but different evidence, so melody-only input can never exceed 'medium'.
       shape_confidence  - does one scale shape explain the notes, and can the input even
                           express the distinctions that matter (quarter tones)?
+    `flags` lists conditions under which a maqam NAME must not be given (poor fit, quarter-tone
+    tonic, tonic/dominant split, too few degrees). `grid_reliable=False` (audio) disables the
+    test for a quarter-tone tonic because absolute tuning is not known.
     """
     p.microtonal = p.microtonal or is_microtonal(p.pcs)
     w = p.norm(p.pcs)
@@ -220,14 +247,23 @@ def interpret(p: Profile, other: "Profile | None" = None):
     top = hyps[0] if hyps else None
     margin = (tonics[0]["share"] - tonics[1]["share"]) if len(tonics) > 1 else 1.0
     best_fit = top["fits"][0]["fit"] if top and top["fits"] else 0.0
-    same_set = bool(len(hyps) > 1 and hyps[1]["fits"] and hyps[1]["fits"][0]["fit"] >= best_fit - 0.03)
+    alts = [h for h in hyps[1:] if h["fits"] and h["fits"][0]["fit"] >= best_fit - 0.03]
+    same_set = bool(alts)
 
     # ---- independent cues voting for the winning tonic -------------------------------
-    cues = {}
+    cues, external = {}, set()
+    flags = []
     if top:
         tpc = top["tonic_pc"]
-        melodic_top = max(tonics, key=lambda r: r["melodic"])
-        cues["vocal/main melody"] = (melodic_top["pc"] == tpc, melodic_top["name"])
+        dur_n = p.norm(p.pcs)
+        cands = {r["pc"] for r in tonics}
+        d_pc = max(cands, key=lambda c: dur_n.get(c, 0))
+        cues["most-used note"] = (d_pc == tpc, name_of(d_pc))
+        fin, las = p.norm(p.finals), p.norm(p.lasts)
+        endings = {c: fin.get(c, 0) + 0.5 * las.get(c, 0) for c in cands if fin.get(c, 0) + las.get(c, 0) > 0}
+        if endings:
+            e_pc = _argmax(endings)
+            cues["phrase endings"] = (e_pc == tpc, name_of(e_pc))
         # chord roots and declared key come from the same transcription tool: ONE vote, not two
         dec = _argmax(p.norm(p.declared)) if p.declared else None
         cho = _argmax(p.norm(p.chords)) if p.chords else None
@@ -235,25 +271,54 @@ def interpret(p: Profile, other: "Profile | None" = None):
             vote = dec if dec is not None else cho
             extra = f" (key) / {name_of(cho)} (commonest chord root)" if (dec is not None and cho is not None) else ""
             cues["tool key & chords*"] = (vote == tpc, name_of(vote) + extra)
+            external.add("tool key & chords*")
         if other is not None and other.pcs:
             ot = tonic_scores(other)
             if ot:
                 o = max(ot, key=lambda r: r["melodic"])
                 cues["other voice"] = (o["pc"] == tpc, o["name"])
+                external.add("other voice")
     agree = sum(1 for ok, _ in cues.values() if ok)
     avail = len(cues)
     frac = agree / avail if avail else 0.0
-    if avail >= 2 and frac >= 0.75 and margin >= 0.08:
+    ext_agree = any(cues[k][0] for k in external)
+    if avail >= 3 and frac >= 0.75 and margin >= 0.08 and ext_agree:
         tonic_conf = "high"
-    elif avail >= 2 and frac >= 0.5:
+    elif avail >= 2 and frac > 0.5:
+        tonic_conf = "medium"
+    elif avail == 2 and frac == 1.0:
         tonic_conf = "medium"
     elif avail < 2 and margin >= 0.15:
         tonic_conf = "medium"
     else:
         tonic_conf = "low"
 
+    # ---- guards -----------------------------------------------------------------------
+    if len(tonics) > 1:
+        t0, t1 = tonics[0], tonics[1]
+        if (t1["pc"] - t0["pc"]) % 1200 in (500, 700) and t1["score"] >= 0.7 * t0["score"]:
+            flags.append(f"tonic/dominant split: {t0['name']} and {t1['name']} (a 4th/5th apart) score almost equally; "
+                         "the true tonic could be either")
+            tonic_conf = {"high": "medium", "medium": "low"}.get(tonic_conf, tonic_conf)
+    if same_set:
+        flags.append("same notes also fit other tonics: " + ", ".join(
+            f"{h['tonic']} ({h['fits'][0]['fit']:.2f})" for h in alts[:3]) + "  -> relative-mode ambiguity")
+    quarter_tonic = bool(top and p.microtonal and grid_reliable and 20 <= (top["tonic_pc"] % 100) <= 80)
+    if quarter_tonic:
+        flags.append(f"tonic {top['tonic']} is a quarter-tone pitch: Sikah / Huzam / Iraq family, which this skill "
+                     "does not model; do not name a maqam")
+    n_deg = sum(1 for v in w.values() if v >= PRESENT_THR)
+    if top and n_deg < 5:
+        flags.append(f"only {n_deg} pitch classes in use: too few to identify a scale; the shape is under-determined")
+    if best_fit < 0.90:
+        flags.append(f"no single scale explains this material (best fit {best_fit:.2f}); "
+                     "expect modulation, chromatic writing or quarter tones; do not name one maqam")
+    name_allowed = bool(top) and best_fit >= 0.90 and not quarter_tonic and n_deg >= 5
+
     # ---- scale-shape confidence -------------------------------------------------------
-    if best_fit >= 0.95:
+    if not name_allowed:
+        shape_conf = "low"
+    elif best_fit >= 0.95:
         shape_conf = "high" if p.microtonal else "medium"   # 12-TET can never prove a maqam
     elif best_fit >= 0.88:
         shape_conf = "medium" if p.microtonal else "low"
@@ -263,8 +328,11 @@ def interpret(p: Profile, other: "Profile | None" = None):
             "present_pcs": [(name_of(x), round(w[x], 3)) for x in sorted(w, key=lambda k: -w[k])],
             "tonics": tonics[:5], "hypotheses": hyps, "tonic_margin": round(margin, 3),
             "best_fit": round(best_fit, 3), "relative_mode_ambiguity": same_set,
+            "alt_tonics": [{"tonic": h["tonic"], "fit": round(h["fits"][0]["fit"], 3)} for h in alts],
             "cues": {k: {"agrees": ok, "points_to": nm} for k, (ok, nm) in cues.items()},
             "tonic_confidence": tonic_conf, "shape_confidence": shape_conf,
+            "name_allowed": name_allowed, "flags": flags,
+            "ghammaz": ghammaz_estimate(p, top["tonic_pc"]) if top else None,
             "semitone_pairs": semitone_pairs(p)}
 
 

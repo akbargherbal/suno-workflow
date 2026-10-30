@@ -1,89 +1,157 @@
 ---
 name: abc-inspired-variants
-description: Turns ABC-notation scores of songs the user loves (usually 2-4 of them, auto-transcribed from AI-generated audio) into 3 new ABC melody sketches that borrow the *flavor* of those songs without copying them, for the user to audition in the abcjs editor. Also reworks a good-but-unremarkable score (about 7/10) toward a more memorable one. Built for the "arabmaqamrock" project (Arabic maqam-flavored symphonic rock, Suno/YuE, LoRA training) and a user with no music education who needs plain-Arabic explanations. Use this skill whenever the user shares .abc files or pasted ABC text, mentions "score", "سكور", "abcjs", "نكهة", "استلهام", "variants", "مقطع 7/10", "قمر بغداد" or arabmaqamrock, or asks for melodies, hooks, lazma/لزمة, fills or alternatives inspired by existing songs, even if they never say "skill" or "ABC".
+description: Autonomous skill that takes ABC-notation scores (auto-transcribed from AI-generated songs, e.g. REF_ABC_SCORE_MAQAM/<Maqam>_Shortlist/<song>/score.abc) and, for each score, writes three new maqam-correct ABC variants VAR_A_score.abc, VAR_B_score.abc and VAR_C_score.abc plus a short Arabic report, with no questions asked during the run. The reference is a starting point, never a model to copy. Verifies the folder's maqam label (Ajam, Hijaz, Kurd, Nahawand; labels are 80-90% reliable) and validates every variant against the maqam's rules. Built for the "arabmaqamrock" project (Arabic maqam-flavored symphonic rock, Suno/YuE, LoRA training) and a user with no music education who reads Arabic. Use whenever the user shares .abc files, a folder of scores, or pasted ABC text, mentions "score", "سكور", "abcjs", "نكهة", "استلهام", "variants", "VAR_A", "Shortlist", "مقام", "حجاز", "كرد", "نهاوند", "عجم", "قمر بغداد" or arabmaqamrock, or asks for melodies, hooks, fills or alternatives inspired by existing songs, or gives feedback on earlier variants, even if he never says "skill" or "ABC".
 ---
 
-# ABC Inspired Variants
+# ABC Inspired Variants (autonomous mode)
 
-Produce **three distinct ABC sketches** that carry the flavor of songs the user loves, then help him choose and carry the winner back into generation. Work in the loop: *measure -> design -> write -> validate -> hand over -> listen to his reaction -> adjust*.
+For each reference score: **measure -> verify the maqam -> design three different recipes -> write -> validate -> report**.
+The user is not in the loop while you work. He will take the variants away, use them as the seed for
+generating new tracks, listen, and possibly come back with feedback (see "Feedback sessions").
 
-## Who you are talking to
+## Operating rules
 
-A Gulf-Arabic-speaking user with **no music education**. Reply in simple Arabic. Put any music term in English in parentheses and explain it in one everyday sentence the first time (cooking analogies work well for him: he brings a dish, you adjust the seasoning). He is the ears; you are the recipe writer. Read `references/project_context.md` before the first reply of a session: it explains the project, what ABC can and cannot do here, and what is already known.
+1. **Never stop to ask a question.** If something is unclear, choose the most reasonable default, apply it,
+   and write the assumption in the song's report (section 5). Finish the whole batch.
+2. **Never modify `score.abc`.** Do not overwrite an existing `VAR_*` file unless the user said "regenerate".
+   If all four output files already exist for a song, skip it (resume safely after interruptions).
+3. **You cannot hear.** Never say a variant "sounds better". Say what changed and what to listen for.
+4. **The reference is a starting point, not a model.** Variants must be genuinely new melodies that keep
+   only what the recipe says to keep. See "Distance from the source".
+5. **Maqam correctness is a hard requirement**, checked by the tool, not by your impression.
+6. The user has no music education. Reports are in simple Arabic, English music terms in parentheses with a
+   one-sentence everyday explanation (cooking analogies work: the score is the dish, you adjust the seasoning).
 
-## Three things to keep straight (they prevent most mistakes)
+Read `references/project_context.md` once at the start of a run (project, what ABC can and cannot do,
+what is known). If `FEEDBACK_LOG.md` exists in the data root (the folder that contains the `*_Shortlist`
+folders), read it too and apply what it says.
 
-1. **You cannot hear.** Never claim a variant "sounds better". Say what you changed and what to listen for; his reaction is the only evidence.
-2. **Editing ABC does not change any generated audio.** ABC sketches are for auditioning ideas in the abcjs editor. Ideas reach real audio only through the generation inputs (lyrics section tags, style string, seed) or an audio reference. So finish with a generation brief (step 7).
-3. **The references define taste, not your theory.** The "memorable hook" ideas in the project context are low-confidence hypotheses from three tracks. When a loved song contradicts them, follow the loved song.
-
-## Workflow
-
-### 1. Intake (ask only for what is missing, one question at a time)
-
-Needed:
-- **2-4 reference scores** (`.abc` files or pasted text; prefer the melody + Ins version) of songs he loves. Say plainly: "give me the scores of songs you love."
-- **In his own words, why he loves each one** (even one line: the opening, the little guitar answer, the chorus, the mood). This is the most valuable input because the numbers cannot tell *which* quality he hears.
-- **The target**: (a) new lyrics to set (with their section tags) and the style prompt used, or (b) an existing ~7/10 score to rework. If he gives neither, make instrumental/vocal-line sketches of 16-24 bars and say so.
-- How many variants: default 3.
-
-If a file is not on disk, check `/mnt/user-data/uploads/`. If something looks like a different tune than he described, say so.
-
-### 2. Measure each reference
-
-Run for every reference (and for the base score if any):
+## Input and output layout
 
 ```
-python scripts/abc_tool.py features ref1.abc ref2.abc ref3.abc
+<root>/                      e.g. REF_ABC_SCORE_MAQAM
+  Hijaz_Shortlist/<song-folder>/score.abc      <- input; the folder name gives the label
+  Hijaz_Shortlist/<song-folder>/VAR_A_score.abc  <- you write these four files
+                               /VAR_B_score.abc
+                               /VAR_C_score.abc
+                               /VAR_REPORT.md       (template: references/report_template.md)
+  VARIANTS_INDEX.md            <- you write one per run (batch summary)
+  FEEDBACK_LOG.md              <- created/updated only in feedback sessions
 ```
 
-Read `references/flavor_traits.md` to translate the numbers into a **flavor card** per reference: 2-3 traits that are most distinctive *relative to the other references and to his typical output*, each paired with his own words. Do not dump the raw numbers on him; give one sentence per trait in plain Arabic, e.g. "الجمل قصيرة وتتخللها ردود قصيرة من الغيتار".
+Labels: `Ajam_Shortlist`, `Hijaz_Shortlist`, `Kurd_Shortlist`, `Nahawand_Shortlist`. They came from an AI
+labeller that is about 80-90% right, so **the label is a prior, not a fact** (step 2).
+The tool is `scripts/abc_tool.py` (run with `python` or `python3`, whichever exists; paths may contain
+Windows backslashes, quote them). `python scripts/abc_tool.py progress <root>` lists songs still lacking outputs.
+If given a single score or pasted ABC with no folder, treat it as one song with no label (`maqam` runs without `--label`);
+write outputs next to it, or in `/mnt/user-data/outputs/` if it only exists as text.
 
-Transcribers re-guess tempo, meter and key for each file, so compare **per-second and per-phrase** numbers, never raw note-length units across files, and never judge the maqam from the key (notes are snapped to 12 tones).
+## Per-song pipeline
 
-### 3. Design three recipes before writing any notes
+### 1. Measure
+```
+python scripts/abc_tool.py features <song>/score.abc
+python scripts/abc_tool.py traits   <song>/score.abc      # compares with sibling songs in the same folder
+```
+Inspect the file itself too: header (`M: L: Q: K:`), voice names, section comments, bar count.
+Transcribers re-guess tempo, meter and key for every file, so compare per-second and per-phrase numbers only.
+`references/flavor_traits.md` explains the numbers. Write a **flavor card**: 2-3 traits where `traits`
+shows |z| >= 1 against its siblings. You have no words from the user about why he likes the song, so
+say these come from numbers only.
 
-Write the three recipes down (in your reasoning or a short table for him):
+### 2. Decide the maqam (due diligence)
+```
+python scripts/abc_tool.py maqam <song>/score.abc --label <Label>
+```
+The tool scores how well the melody fits each maqam on each possible home note (the file's `K:` is only
+a transcriber guess, so do not trust it) and applies the label as a prior. Statuses:
 
-- **Variant A** leans on reference 1's strongest traits.
-- **Variant B** leans on reference 2's strongest traits.
-- **Variant C** is a deliberate blend plus one wildcard (a trait none of the references has, taken from the base score or a hypothesis in the project context).
+| Status | Meaning | What you do |
+|---|---|---|
+| CONFIRMED | label fits as well as anything | use the label, with the tool's tonic |
+| KEEP_LABEL | something fits a bit better but not convincingly | use the label; say so in the report |
+| OVERRIDE | the melody clearly fits another maqam much better | **use the tool's TARGET maqam**; state it prominently |
+| LOW_FIT | nothing fits well (noise or modulation) | use the label; stay on core notes only |
+| NO_LABEL | no folder label | use the tool's TARGET |
 
-Each variant must differ from the others in **at least three measurable ways** (phrase length, fill density and spacing, rhythm density, range, how much the Ins voice speaks, mode or tempo). Three versions that differ only by a few notes defeat the purpose: he wants to hear three different ideas.
+Also read `TONIC UNSURE` and `CLOSE RIVALS` lines (twin modes share notes; see `maqam_rules.md` section 7):
+choose by where phrases rest and where the song ends; if still tied, keep the label. Record the final
+choice **(maqam, tonic)** and one sentence of evidence. Do not silently change a maqam.
 
-"Inspired by" means borrowing a *behavior* (e.g. "answers every second line with a short rising figure"), not a *melody*. Transform what you borrow: change the pitches, the contour direction, the rhythm, or the placement.
+Read `references/maqam_rules.md` for the chosen maqam before composing.
+
+### 3. Design three recipes (before writing notes)
+Common to all variants: same maqam and tonic, same `M:` and `L:1/16`, voices `Vocal` and `Ins` (use the
+source's voice names), same section order and about the same length (+-10% bars), every section ends on a
+maqam-appropriate resting note, final Vocal note = tonic.
+
+| Variant | Idea | Keep from the source | Change |
+|---|---|---|---|
+| **A Polish** | the source, recomposed as a proper maqam sayr | phrase boundaries and general rhythm skeleton, `Q:` | all pitches; clearer tonic/dominant landings; characteristic move in the first phrases; one signature fill (4-8 notes) in `Ins`, reused with small variation |
+| **B Reshape** | a different shape for the same material | section order, `Q:` within +-8% | shorter singable chunks (8-12 notes) with beat-long rests; different rhythm density (>= 25% change in notes/sec or median note length); fills irregularly spaced; contour arch, chorus a fourth or fifth higher than verse |
+| **C Reimagine** | a wildcard inside the maqam | section order only | a trait neither A nor B uses: e.g. start on the 3rd or 5th instead of the tonic, a sayr that visits the upper jins early, a refrain (opening phrase reused for the chorus, lyrics unchanged), a different register, `Q:` up to +-12%, or a sparser/denser `Ins` role |
+
+Each variant must differ from the other two in **at least three measurable ways** (phrase length,
+fill count or spacing, notes/sec, range, Ins activity, tempo, opening degree, contour). Variants that differ by a few
+notes defeat the purpose: he wants to hear three different ideas. Borrow a *behavior* (e.g. "answers every
+second line with a short rising figure"), not a melody; transform what you borrow.
 
 ### 4. Write the ABC
-
-Follow `references/abc_writing.md` (header skeleton, bar arithmetic, voices, pitfalls). Essentials:
-- Keep his structure: `X, M, L, Q, K`, voices named `Vocal` and `Ins`, `L:1/16`.
-- One complete, self-contained file per variant (he pastes it whole). Mark sections with `% intro`, `% verse 1` etc. and, when lyrics are given, `% line N` per hemistich so he can map notes to words.
-- Never alter lyric text or diacritics. A refrain built by repeating a short phrase is allowed only as a labeled option.
-- Do not rely on quarter-tone playback. If you use microtonal accidentals, say so and ask whether he hears them.
-- Save as `variant_A.abc`, `variant_B.abc`, `variant_C.abc` in `/mnt/user-data/outputs/`.
-
-### 5. Validate (do not skip: a broken bar plays wrongly or not at all in abcjs)
-
+Follow `references/abc_writing.md`. Start every variant from the source's header, keep `K:` as in the source (the
+`scale` command prints the correct ABC spelling for that `K:`):
 ```
-python scripts/abc_tool.py check variant_A.abc variant_B.abc variant_C.abc
-python scripts/abc_tool.py compare variant_A.abc ref1.abc ref2.abc ref3.abc --others variant_B.abc variant_C.abc
+python scripts/abc_tool.py scale --maqam <Target> --tonic <Tonic> --key-from <song>/score.abc
 ```
+Top of each file: comment lines `% VARIANT A of <folder> | <Maqam> on <Tonic> | recipe: Polish`. Keep or add
+`% intro`, `% verse 1`, `% line N` section comments so notes map to words. Do not add `w:` lines. Do not rely
+on quarter-tone playback; the variants must be recognisable in plain 12-tone playback.
 
-Fix every `FIX` line. If `compare` says `TOO CLOSE`, rewrite that stretch: the goal is flavor, not a copy. A "motif-sized cell" shared with a reference is fine when intentional. Then run `features` on each variant and confirm they differ the way the recipes promised; if two look alike, change one.
+### 5. Validate and repair (loop up to 4 rounds per variant)
+```
+python scripts/abc_tool.py check VAR_A_score.abc VAR_B_score.abc VAR_C_score.abc
+python scripts/abc_tool.py modal VAR_A_score.abc VAR_B_score.abc VAR_C_score.abc --maqam <Target> --tonic <Tonic>
+python scripts/abc_tool.py compare VAR_A_score.abc score.abc --others VAR_B_score.abc VAR_C_score.abc
+python scripts/abc_tool.py features VAR_A_score.abc VAR_B_score.abc VAR_C_score.abc --tonic <Tonic>
+```
+- Fix every `FIX` line in `check` and `modal` (`modal` prints the source line numbers of offending notes).
+  `WARN` lines: fix if cheap, otherwise mention in the report.
+- **Distance from the source.** `compare` against `score.abc` must show a longest identical run of at most 7
+  intervals, and overall similarity at most 0.60 for A and at most 0.50 for B and C (starting values; if a
+  limit proves silly in practice, say so in the report). Also compare each variant with the other two.
+- Run `features` on the variants and confirm they differ the way the recipes promised; if two look alike, rewrite one.
+- If a `FIX` is still unresolved after 4 rounds, keep the file but put `% UNRESOLVED: <what>` as its second line and list it in
+  the report and index. A file that fails `check` (broken bars) must never be delivered; simplify until it passes.
 
-### 6. Hand over, in plain Arabic
+### 6. Write `VAR_REPORT.md`
+Use `references/report_template.md`. Short, in simple Arabic. Include the maqam decision and its evidence,
+flavor card, the recipe table with where to listen (bar or section) and one thing to notice, the quality
+checks, the assumptions, and what hypothesis each variant tests, so he can attribute results.
 
-Present the files, then a short table per variant: its recipe (which reference's flavor, in his words), **where to listen** (bar number or section), and one thing to notice. Tell him: open https://www.abcjs.net/abcjs-editor, paste the variant, press play. Ask one question: which one pulled him, and in what words (too busy? too flat? which spot?). Do not recommend a winner as fact; you may say which you *expect* to suit his stated taste and why.
+### 7. After the last song: write `VARIANTS_INDEX.md` at the root
+One table row per song: folder, label, final maqam and tonic, status, anything unresolved. List first all
+OVERRIDE, LOW_FIT, TONIC UNSURE and UNRESOLVED cases. End with `python scripts/abc_tool.py progress <root>`
+output. Then give a short chat summary (counts, the exceptional songs, nothing else) and stop. Do not ask questions.
 
-### 7. After he reacts
+## Feedback sessions (later, when the user returns)
 
-- **Iterate on the favorite**: one change at a time, full file back, mark `% CHANGED`. Keep a short decision log (kept / dropped / why).
-- **When he says it feels right**, give the generation brief: (a) exact lyrics-tag edits (where to request a short guitar fill, where to repeat the opening couplet as a refrain, section dynamics), (b) edits to the style string, (c) a best-of-N plan that changes only the seed, (d) a rating note including the "shower test": a day later, which version can he hum?
-- **After three rounds with no "that's it" moment**, say so and recommend generating several seeds and choosing by ear instead of more ABC edits.
+He will name songs/variants and say what he heard, even in a few words. Then:
+1. Append to `FEEDBACK_LOG.md` in the root: date, song, variant, recipe, his words, your interpretation
+   (labelled hypothesis), decision. Keep it factual and short.
+2. **Iterate one change at a time** on the variant he liked: write `VAR_B_score_r2.abc` (never overwrite earlier
+   files), mark edits with `% CHANGED`, re-run the validation loop, add a line to the report.
+3. Look for patterns across songs (which recipe worked per maqam, what he rejected) and write
+   them in the log under "Patterns so far", marked low confidence until repeated. Use them as defaults in the next batch.
+4. His explicit corrections about a maqam override `references/maqam_rules.md`; log them and follow them.
+5. **After three rounds without a "that's it" moment** on a song, say so and recommend generating several
+   seeds and choosing by ear instead of more ABC edits.
+6. If he says a variant feels right, give a generation brief: lyrics-tag edits (where a short guitar fill is
+   requested, where the opening couplet repeats, section dynamics), style-string edits, a best-of-N seed plan, and a
+   rating note including the "shower test" (a day later, which version can he hum?).
 
 ## Honesty and scope
 
-- Say "experiment" or "hypothesis", never "this will reach 9/10". If an idea is unlikely to survive into the audio, say so kindly.
-- If his reaction contradicts your reasoning, state that your idea is weakened and propose another.
-- Do not claim the transcription captures guitars, strings, mix or vocal ornaments (melisma); it does not. Note that pitch accuracy of the transcription itself is approximate.
-- This is melody and structure sketching. It is not music theory teaching unless he asks.
+- Say "experiment" or "hypothesis", never "this will reach 9/10". If an idea is unlikely to survive into the audio, say so.
+- The transcription does not capture guitars, strings, mix or vocal ornaments (melisma), and its pitch accuracy is approximate.
+- The detection thresholds in `abc_tool.py` are starting values checked only on synthetic melodies. The
+  user can run `python scripts/abc_tool.py survey <root>` on the whole corpus to see how labels and detection agree.
+- This is melody and structure sketching, not music-theory teaching unless he asks.

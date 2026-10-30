@@ -12,6 +12,11 @@ make the pitch tracker jump; the numbers are only as clean as the input.
 Why this exists: ABC/MIDI round everything to 12 semitones, so the 150-cent 2nd degree of
 Bayati/Saba/Sikah and the 350-cent 3rd of Rast are invisible there. Here they are measured.
 
+Guards: the run is refused (exit code 2) when there are fewer than 5 s of voiced audio, fewer than 3
+stable pitch peaks, or one pitch holds more than 60 % of the voiced time (typical when a pad / drone /
+loud accompaniment captured the tracker). Thin-but-usable input (< 15 s voiced, < 5 peaks) is reported
+with confidences forced to "low".
+
 Output uses the same report as analyze_abc.py, plus a table of measured degrees relative to the
 winning tonic (cents), which is the actual evidence for quarter tones.
 """
@@ -31,6 +36,33 @@ from analyze_abc import render_group                                # noqa: E402
 C0_HZ = 16.3516          # C0 at A4 = 440
 
 
+class InputProblem(Exception):
+    """The audio cannot support a pitch-class analysis (exit code 2)."""
+
+
+MIN_VOICED_S, SOFT_VOICED_S = 5.0, 15.0
+MIN_PEAKS, SOFT_PEAKS = 3, 5
+MAX_ONE_PEAK = 0.60
+
+
+def check_input(voiced_s, peaks):
+    """-> (severe, soft) lists of messages."""
+    severe, soft = [], []
+    top = max((m for _, m in peaks), default=0.0)
+    if voiced_s < MIN_VOICED_S:
+        severe.append(f"only {voiced_s:.1f} s of voiced audio (need >= {MIN_VOICED_S:.0f} s)")
+    elif voiced_s < SOFT_VOICED_S:
+        soft.append(f"only {voiced_s:.1f} s of voiced audio; results are anecdotal")
+    if len(peaks) < MIN_PEAKS:
+        severe.append(f"only {len(peaks)} distinct pitch peaks (a scale needs >= {MIN_PEAKS}, normally 5-7)")
+    elif len(peaks) < SOFT_PEAKS:
+        soft.append(f"only {len(peaks)} distinct pitch peaks; scale shape is under-determined")
+    if top > MAX_ONE_PEAK:
+        severe.append(f"one pitch holds {100 * top:.0f}% of the voiced time: the tracker has probably locked onto a "
+                      "drone / pad / loud accompaniment instead of the melody")
+    return severe, soft
+
+
 def hz_to_cents(f, tuning=0.0):
     return 1200.0 * np.log2(np.asarray(f, float) / C0_HZ) - tuning
 
@@ -46,8 +78,10 @@ def load_f0(path, csv=False, fmin="C2", fmax="C6", sr=22050, hop=512):
         return t, f
     try:
         import librosa
-    except ImportError:
-        raise SystemExit("librosa is required for audio input: pip install librosa  (or pass --csv)")
+        import soundfile  # noqa: F401  (librosa needs it for most formats)
+    except ImportError as e:
+        raise SystemExit(f"audio input needs librosa and soundfile ({e.name} missing): "
+                         "pip install librosa soundfile  (or pass --csv time,f0_hz)")
     y, sr = librosa.load(path, sr=sr, mono=True)
     f0, voiced, prob = librosa.pyin(y, fmin=librosa.note_to_hz(fmin), fmax=librosa.note_to_hz(fmax),
                                     sr=sr, hop_length=hop)
@@ -130,7 +164,8 @@ def build_profile(notes, t, cents, tuning=0.0, steady_weight=1.0):
     h_raw, hs = circular_hist(pc, w)
     peaks = find_peaks(h_raw, hs)
     if not peaks:
-        raise SystemExit("no stable pitch peaks found; is the signal voiced / is the input too noisy?")
+        raise InputProblem("no stable pitch peaks found; is the signal voiced / is the input too noisy or "
+                           "dominated by accompaniment? Isolate the vocal first.")
     pcs = {round(c, 1): m for c, m in peaks}
     finals, initials, lasts = {}, {}, {}
 
@@ -148,15 +183,27 @@ def build_profile(notes, t, cents, tuning=0.0, steady_weight=1.0):
     prof = Profile(pcs=pcs, finals=finals, initials=initials, lasts=lasts, microtonal=True,
                    label="Audio (f0 peaks)")
     prof.total_dur = float(valid.sum() * dt)
+    severe, soft = check_input(prof.total_dur, peaks)
+    if severe:
+        raise InputProblem("; ".join(severe) + ".  Isolate the vocal (stem separation) or pass a cleaner f0 table.")
+    prof.soft_problems = soft
     return prof, peaks
 
 
 def report(prof, peaks, notes):
-    res = interpret(prof)
+    res = interpret(prof, grid_reliable=False)       # absolute tuning unknown -> no quarter-tone-tonic test
+    soft = getattr(prof, "soft_problems", [])
+    if soft:
+        res["flags"].extend(soft)
+        res["tonic_confidence"] = res["shape_confidence"] = "low"
+    if not res["name_allowed"]:
+        res["tonic_confidence"] = "low"       # in audio a poor fit usually means pad / noise, not modulation
+    res["flags"].append("audio tonic confidence rests on melody cues only (no chords / second voice); "
+                        "accompaniment in the mix can mislead the tracker")
     L = ["## Audio analysis (f0 -> cents)", "",
          f"- voiced material: {prof.total_dur:.1f} s, steady notes found: {len(notes)}",
          "- tuning assumed A4 = 440 Hz (use --tuning-cents if the track is detuned)", ""]
-    L.append(render_group(res, prof.total_dur))
+    L.append(render_group(res, prof.total_dur, unit="seconds of voiced audio"))
     top = res["hypotheses"][0]
     t = top["tonic_pc"]
     L.append("\nMeasured degrees relative to the winning tonic (cents):")
@@ -204,7 +251,11 @@ def _tone(f, dur, sr, rng):
 
 def selftest():
     import tempfile
-    import soundfile as sf
+    try:
+        import soundfile as sf
+        import librosa  # noqa: F401
+    except ImportError as e:
+        raise SystemExit(f"--selftest needs librosa and soundfile ({e.name} missing): pip install librosa soundfile")
     cases = [("bayati", "Bayati"), ("kurd", "Kurd"), ("nahawand", "Nahawand"), ("rast", "Rast"),
              ("hijaz", "Hijaz")]
     tonic_hz = 293.66           # D4
@@ -240,10 +291,14 @@ def main():
     src = a.csv or a.audio
     if not src:
         sys.exit(__doc__)
-    t, f0 = load_f0(src, csv=bool(a.csv))
-    cents = hz_to_cents(f0, a.tuning_cents)
-    notes = segment_notes(t, cents)
-    prof, peaks = build_profile(notes, t, cents, a.tuning_cents)
+    try:
+        t, f0 = load_f0(src, csv=bool(a.csv))
+        cents = hz_to_cents(f0, a.tuning_cents)
+        notes = segment_notes(t, cents)
+        prof, peaks = build_profile(notes, t, cents, a.tuning_cents)
+    except InputProblem as e:
+        print(f"REFUSED: {e}", file=sys.stderr)
+        sys.exit(2)
     print(report(prof, peaks, notes)[0])
 
 

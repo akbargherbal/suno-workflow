@@ -26,10 +26,14 @@ Read this once at the start of a session. It exists so the user never has to re-
 
 ## 3. How ABC edits reach real audio
 
-They do not, directly. There is no input path from ABC to Suno or YuE. The routes that do reach audio:
-- **Lyrics section tags and the style string**: where to ask for a short guitar fill, where the refrain repeats, what each section's dynamics are. Not guaranteed to be obeyed; test, do not promise.
-- **Seed**: same lyrics + style with different seeds gives different takes; choosing the best of N by ear is the most reliable improvement lever found so far.
-- **Audio reference** (advanced): a rendered sketch could serve as a reference where the generator supports one; treat as inspiration, not a literal instruction.
+There is no direct input path from ABC text to Suno or YuE. The routes that do reach audio:
+- **The user's own seed test (the current plan).** He takes the variants, uses them as the seed for generating new tracks,
+  listens, and reports back. How he feeds them in is his business; the skill only has to deliver clean, maqam-correct,
+  playable ABC and to say what each variant is meant to test.
+- **Lyrics section tags and the style string**: where to ask for a short guitar fill, where the refrain repeats, what each
+  section's dynamics are. Not guaranteed to be obeyed; test, do not promise.
+- **Seed**: same lyrics + style with different seeds gives different takes; choosing the best of N by ear is the most
+  reliable improvement lever found so far.
 
 ## 4. What is already known
 
@@ -41,8 +45,16 @@ Confidence is stated per item. These came from comparing three transcribed track
 - (User's own insight, high) Memorability comes from a short, specific figure he can hum afterwards, not from overall polish. He remembers "Baghdad Moon's" fill after dozens of listens and cannot recite its words.
 - (Low) A fill after *every* line at a metronomic spacing felt like a formula. One signature figure that returns with small variation at less predictable moments is the candidate principle to test.
 
-## 5. Reference tracks (scores the user has shared)
+## 5. The reference corpus (current)
 
-- "Munajat Diyar al-Uns" (Nahawand): rated about 7/10, "not memorable". Transcribed `K:D#m`, 2/4, 73 bpm, ~3:38.
+Folder `REF_ABC_SCORE_MAQAM/` holds 40 hand-picked songs the user seems to like, each as
+`<Maqam>_Shortlist/<three-word-animal-name>/score.abc`: Ajam 6, Hijaz 9, Kurd 19, Nahawand 6.
+The folder name is the maqam label, produced by an AI model that is generally accurate for these four maqams
+(they have Western equivalents) but should be assumed wrong in 10-20% of cases. Hence the skill checks every
+label against the notes (`abc_tool.py maqam`). Presumably they use the same transcription format as the earlier files (`Vocal` + `Ins` voices); inspect each file rather than assume.
+Run `abc_tool.py survey <root>` to see how many labels the tool confirms.
+
+Earlier hand-analysed tracks (basis of section 4):
+- "Munajat Diyar al-Uns" (Nahawand): about 7/10, "not memorable". Transcribed `K:D#m`, 2/4, 73 bpm, ~3:38.
 - "Baghdad Moon" accident (Hijaz): the happy accident. `K:Gm`, 2/4, 89 bpm, ~3:38 by score (3:35 real).
 - "Baghdad Moon" second take: rated 7.5-8, monotonous. `K:Dm`, 4/4, 122 bpm, ~4:09.

@@ -65,15 +65,18 @@ sits on the 4th/5th. The scripts do not model that, so a good match is a hint, n
 | Pitch classes | share of total sung duration per pitch class (not note counts). |
 | tonic share | normalised evidence score, **not a probability**. Compare candidates only with each other. |
 | melody-only | the part of the score that comes from the melody itself (duration, phrase-final, phrase-initial, last note), after the 5th-support discount. |
+| cues | independent votes for the winning tonic: **most-used note**, **phrase endings** (both from the melody, but different evidence), **tool key & chords\*** (one vote), **other voice**. Chord evidence is weighted by how long each chord is in force. |
 | chord* / declared* | produced by the transcription tool (chord symbols, `K:` line), not by the melody. One vote. |
 | other voice | the same melody-only call made on the other voice(s) (e.g. instrument line). |
-| tonic confidence | high: >= 75 % of cues agree and margin >= 0.08; medium: >= half agree; low otherwise. |
+| tonic confidence | **high** needs >= 3 cues, >= 75 % agreeing, margin >= 0.08 *and* at least one cue that is not the melody (tool key/chords or another voice), so melody-only input never reaches high. **medium**: more than half agree, or both of two agree. **low** otherwise, and forced down one step by a tonic/dominant split. |
+| secondary resting note | candidate ghammaz: the non-tonic degree (250-1000 c above the tonic) on which most phrases end. Descriptive only; pop melodies also rest on the 3rd/5th for non-maqam reasons. |
+| Flags | conditions where a maqam name must **not** be given: poor fit, quarter-tone tonic (Sikah/Huzam/Iraq family), tonic/dominant split, fewer than 5 pitch classes, same notes fitting other tonics. They print in `--brief` too. |
 | fit | share of sung duration that lies on the template, minus small penalties for missing and extra degrees. |
 | shape confidence | 12-TET input is capped at *medium* because it cannot show quarter tones; `high` needs microtonal input (audio or `_/` `^/` accidentals) and fit >= 0.95. |
 | 12-TET shadow of: X | the notes are consistent with X only if one of its quarter-tone degrees was rounded. Say "possibly X", never "X". |
 | Notes outside this scale | pitch classes (>= 1.5 %) not in the best-fit scale: modulation, alteration, or a neutral degree rounded to the wrong side. |
 | Scale degrees almost never sung | degrees < 1 % : avoided on purpose, or microtonal and lost in transcription. |
-| No single 12-TET scale explains... | best fit < 0.90. Do not name one maqam. Look at sections, or ask for audio. |
+| no single scale explains this material | best fit < 0.90. The report prints "no single scale identified - do not name a maqam" and only a *closest partial match*. Look at sections, or ask for audio. |
 
 ## 4. The audio route (analyze_f0.py)
 
@@ -84,13 +87,20 @@ sits on the 4th/5th. The scripts do not model that, so a good match is a hint, n
 4. Tuning: assumes A4 = 440 Hz. If every peak sits 20-40 cents off the grid, pass `--tuning-cents`.
 5. Sung vibrato/ornaments widen peaks (about +-15 c); real singers also drift, so treat +-25 c as "on" the degree.
 6. Not validated on real recordings yet (only on synthetic tones). Say so when reporting.
+7. **Refusals.** The script exits with code 2 and "REFUSED" when there are < 5 s of voiced audio, < 3 pitch peaks,
+   or one pitch holds > 60 % of the voiced time (usually a pad/drone/loud accompaniment captured the tracker).
+   Do not work around this by lowering thresholds: ask for a vocal stem. Thin-but-usable audio (< 15 s, < 5 peaks) is
+   reported with confidences forced to *low*. Even on a mix that is not refused, the tonic can be the accompaniment's.
+8. Absolute tuning is unknown for audio, so a quarter-tone tonic (Sikah) cannot be detected from audio alone.
 
 ## 5. What to ask the user for, in order of value
 
 1. Isolated vocal audio (or an f0 CSV) for the song, because it is the only thing that can show quarter tones.
 2. Any known ground truth (tonic / maqam / key) to check the call against.
 3. The prompt given to the generator, if the song was AI-generated; useful as a weak prior, since generators ignore or blend such instructions.
-4. A transcription with microtonal accidentals (`_/` `^/`) or MIDI with pitch bend, if the transcriber can produce one.
+4. A transcription with microtonal accidentals (`_/` `^/` `_3/2`, or `K:D exp _/e _/b`) or MIDI with pitch bend / MusicXML with
+   fractional `<alter>`, if the transcriber can produce one. Check the parser warnings: a file that *looks* microtonal but whose
+   accidentals were not recognised would be reported as plain 12-TET.
 
 ## 6. Observed behaviour on real transcriptions (4 commercial songs)
 

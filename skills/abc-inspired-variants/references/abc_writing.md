@@ -9,8 +9,10 @@ The user pastes your file into https://www.abcjs.net/abcjs-editor and presses pl
 4. Pitch, accidentals, ties
 5. Common pitfalls
 6. Minimal example
+7. Spelling the maqam with `scale`
+8. Audio-seed friendliness
 
-## 1. Header skeleton (copy from his files)
+## 1. Header skeleton (copy from the source score, do not invent one)
 
 ```
 X:1
@@ -86,3 +88,24 @@ z4D2F2|A2G2F2E2|
 ```
 
 Check: every bar is 8 units in both voices (the Vocal rests `Z|Z|` cover the two fill bars). (Lines are illustrative, not a recommendation.)
+
+## 7. Spelling the maqam with `scale`
+
+Because `K:` is a transcriber guess (e.g. `K:D#m` for a song whose home note is C), plain letters often do not
+mean what you expect. Never spell by intuition; run
+
+```
+python scripts/abc_tool.py scale --maqam Hijaz --tonic D --key-from score.abc
+```
+
+It lists each degree with the exact ABC token for that file's `K:` (plain letter = already correct; `^` `_` `=`
+= explicit accidental, which lasts until the next barline), plus the octave above and below. Keep the source's
+`K:` line so the header stays identical across the variants. Afterwards `abc_tool.py modal` verifies the result
+and prints the source line number of every note outside the maqam.
+
+## 8. Audio-seed friendliness
+
+The user will use the variants as seeds for generating new tracks, so what he hears from the abcjs/MIDI
+rendering is what matters. Keep `Vocal` a clean, singable single line (no chords or stacked notes in it).
+Keep `Q:` explicit. Avoid grace notes, tuplets and microtonal accidentals. Let `Ins` fills sit in the rests of
+`Vocal`, not on top of it. Keep pitches inside a comfortable range (about 1.5 octaves for `Vocal`).
